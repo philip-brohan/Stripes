@@ -6,6 +6,10 @@ import os
 import iris
 from calendar import monthrange
 
+# Fix dask SPICE bug
+import dask
+dask.config.set(scheduler='single-threaded')
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--month", help="Integer month",
