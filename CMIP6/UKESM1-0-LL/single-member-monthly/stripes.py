@@ -14,49 +14,12 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
-startyear=1851
-start=cftime._cftime.Datetime360Day(startyear,1,1)
-endyear=2018
-end=cftime._cftime.Datetime360Day(endyear,12,30)
+start=cftime._cftime.Datetime360Day(1851,1,1)
+end=cftime._cftime.Datetime360Day(2018,12,30)
 
-# Pick a random ensemble member
-member = numpy.random.randint(4)+1
+from get_sample import get_sample_cube
 
-# Load the model data
-a=iris.load_cube(("%s/CMIP6/UKESM1-0-LL/Historical/"+
-                 "tas_Amon_UKESM1-0-LL_historical_r%si1p1f2_gn_185001-194912.nc") % 
-                                                      (os.getenv('SCRATCH'),member),
-                 iris.Constraint(name='air_temperature') &
-                 iris.Constraint(time=lambda cell: startyear <= cell.point.year <=endyear))
-b=iris.load_cube(("%s/CMIP6/UKESM1-0-LL/Historical/"+
-                 "tas_Amon_UKESM1-0-LL_historical_r%di1p1f2_gn_195001-201412.nc") % 
-                                                        (os.getenv('SCRATCH'),member),
-                 iris.Constraint(name='air_temperature') &
-                 iris.Constraint(time=lambda cell: startyear <= cell.point.year <=endyear))
-b.attributes=a.attributes  # oterwise won't concatenate
-h=iris.cube.CubeList((a,b)).concatenate_cube()
-dts = h.coords('time')[0].units.num2date(h.coords('time')[0].points)
-
-# Get the climatology
-n=[]
-for m in range(1,13):
-    mc=iris.Constraint(time=lambda cell: cell.point.month == m and cell.point.year>1960 and cell.point.year<1991)
-    n.append(h.extract(mc).collapsed('time', iris.analysis.MEAN))
-
-# Anomalise
-for tidx in range(len(dts)):
-    midx=dts[tidx].month-1
-    h.data[tidx,:,:] -= n[midx].data
-
-# Sample in Longitude
-p=h.extract(iris.Constraint(longitude=0))
-s=h.data.shape
-for t in range(s[0]):
-    for lat in range(s[1]):
-        rand_l = numpy.random.randint(0,s[2])
-        p.data[t,lat]=h.data[t,lat,rand_l]
-h=p
-ndata=h.data
+(ndata,dts) = get_sample_cube(start,end)
 
 # Plot the resulting array as a 2d colourmap
 fig=Figure(figsize=(19.2,6),              # Width, Height (inches)

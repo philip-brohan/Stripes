@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-# Make an extended climate-stripes image from Eustace
-# Monthly, resolved in latitude, sampling in longitude, one ensemble member.
+# 20CRv3 stripes.
+# Monthly, resolved in latitude, sampling in longitude, ensemble mean.
 
 import os
 import iris
@@ -16,36 +16,13 @@ from matplotlib.patches import Rectangle
 start=datetime.datetime(1851,1,1,0,0)
 end=datetime.datetime(2018,12,31,23,59)
 
-# Choose one ensemble member (arbitrarily)
-member = numpy.random.randint(10)
+from get_sample import get_sample_cube
 
-# Load the Eustace monthly normals
-n=[]
-for month in range(1,13):
-    h=iris.load_cube("%s/EUSTACE/1.0/monthly/climatology_1961_1990/%02d.nc" % 
-                      (os.getenv('SCRATCH'),month),
-                     iris.Constraint(cube_func=(lambda cell: cell.var_name == 'tas')))
-    n.append(h)
-
-# Array to store the sample in
-ndata=numpy.ma.array(numpy.zeros(((2016-1850)*12,720)),mask=False)
-dts=[]
-# Assemble the sample slice by slice
-for year in range(1850,2016):
-    for month in range(1,13):
-        t=(year-1850)*12+month-1
-        h=iris.load_cube("%s/EUSTACE/1.0/monthly/%04d/%02d.nc" % 
-                          (os.getenv('SCRATCH'),year,month),
-                         iris.Constraint(cube_func=(lambda cell: cell.var_name == 'tasensemble_%d' % member)))
-        h = h-n[month-1] # to anomaly
-        for lat in range(720):
-            rand_l = numpy.random.randint(0,1440)
-            ndata[t,lat]=h.data[0,lat,rand_l]
-        dts.append(datetime.datetime(year,month,15))
+(ndata,dts) = get_sample_cube(start,end)
 
 # Plot the resulting array as a 2d colourmap
 fig=Figure(figsize=(19.2,6),              # Width, Height (inches)
-           dpi=600,
+           dpi=300,
            facecolor=(0.5,0.5,0.5,1),
            edgecolor=None,
            linewidth=0.0,
@@ -56,9 +33,9 @@ canvas=FigureCanvas(fig)
 matplotlib.rc('image',aspect='auto')
 
 # Add a textured grey background
-s=(2000,100)
+s=(2000,600)
 ax2 = fig.add_axes([0,0,1,1],facecolor='green')
-ax2.set_axis_off() # Don't want surrounding x and y axis
+ax2.set_axis_off() 
 nd2=numpy.random.rand(s[1],s[0])
 clrs=[]
 for shade in numpy.linspace(.42+.01,.36+.01):
@@ -76,9 +53,9 @@ ax = fig.add_axes([0,0,1,1],facecolor='black',
                   xlim=((start+datetime.timedelta(days=1)).timestamp(),
                         (end-datetime.timedelta(days=1)).timestamp()),
                   ylim=(0,1))
-ax.set_axis_off() 
+ax.set_axis_off()
 
-ndata = numpy.transpose(ndata)
+ndata=numpy.transpose(ndata)
 s=ndata.shape
 y = numpy.linspace(0,1,s[0]+1)
 x = [(a-datetime.timedelta(days=15)).timestamp() for a in dts]
@@ -90,4 +67,5 @@ img = ax.pcolorfast(x,y,numpy.cbrt(ndata),
                         vmax=1.7,
                         zorder=100)
 
-fig.savefig('single_member.png')
+fig.savefig('20CRv3.png')
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Make an extended climate-stripes image from HadCRUT5
-# Monthly, resolved in latitude, sampling in longitude, one ensemble member.
+# Monthly, resolved in longitude, sampling in latitude, sampling the ensemble.
 
 import os
 import iris
@@ -16,24 +16,9 @@ from matplotlib.patches import Rectangle
 start=datetime.datetime(1851,1,1,0,0)
 end=datetime.datetime(2018,12,31,23,59)
 
-# Choose one ensemble member (arbitrarily)
-member = numpy.random.randint(100)+1
+from get_sample import get_sample_cube
 
-# Load the HadCRUT5 analysis data
-h=iris.load_cube("/scratch/hadcc/hadcrut5/build/HadCRUT5/analysis/"+
-                 "HadCRUT.5.0.0.0.analysis.anomalies.%d.nc" % member,
-                 iris.Constraint(time=lambda cell: start <= cell.point <=end))
-
-# Pick a random longitude at each month
-p=h.extract(iris.Constraint(longitude=0))
-s=h.data.shape
-for t in range(s[0]):
-   for lat in range(s[1]):
-       rand_l = numpy.random.randint(0,s[2])
-       p.data[t,lat]=h.data[t,lat,rand_l]
-h=p
-dts = h.coords('time')[0].units.num2date(h.coords('time')[0].points)
-ndata=h.data
+(ndata,dts) = get_sample_cube(start,end)
 
 # Plot the resulting array as a 2d colourmap
 fig=Figure(figsize=(19.2,6),              # Width, Height (inches)
@@ -82,4 +67,4 @@ img = ax.pcolorfast(x,y,numpy.cbrt(ndata),
                         vmax=1.7,
                         zorder=100)
 
-fig.savefig('single_member.png')
+fig.savefig('HadCRUT5.png')
