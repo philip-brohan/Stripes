@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Make an extended climate-stripes image from HadCRUT5
-# Monthly, resolved in latitude, sampling in longitude, sampling the ensemble.
+# Monthly, resolved in latitude, sampling in longitude, one ensemble member.
 # Regridded to the EUSTACE grid.
 
 import os
@@ -53,7 +53,7 @@ canvas=FigureCanvas(fig)
 matplotlib.rc('image',aspect='auto')
 
 # Add a textured grey background
-s=(2000,600)
+s=(2000,100)
 ax2 = fig.add_axes([0,0,1,1],facecolor='green')
 ax2.set_axis_off() # Don't want surrounding x and y axis
 nd2=numpy.random.rand(s[1],s[0])

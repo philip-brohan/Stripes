@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-# Make an extended climate-stripes image from HadCRUT5
-# Monthly, resolved in latitude, sampling in longitude, sampling the ensemble.
+# Make an extended climate-stripes image from 20CRv3
+# Monthly, resolved in longitude, sampling in latitude, ensemble mean.
 # Regridded to the EUSTACE grid.
 
 import os
@@ -24,15 +24,26 @@ egrid = iris.load_cube(("%s/EUSTACE/1.0/1969/"+
                         os.getenv('SCRATCH'),
             iris.Constraint(cube_func=(lambda c: c.var_name == 'tas')))
 
+# Make the climatology
+n=[]
+for m in range(1,13):
+    mc=iris.Constraint(time=lambda cell: cell.point.month == m and \
+                                         cell.point.year > 1960 and \
+                                         cell.point.year < 1991)
+    h=iris.load_cube('%s/20CR/version_3/monthly_means/air.2m.mon.mean.nc' % 
+                                                   os.getenv('SCRATCH'),
+                 iris.Constraint(name='air_temperature') & mc)
+    n.append(h.extract(mc).collapsed('time', iris.analysis.MEAN))
+
 # Process in batches or we'll run out of memory.
 rst = numpy.random.RandomState(seed=None)
 dts=[]
 ndata=None
 for year in range(start.year,end.year+1,10):
-    print("\n\n%4d\n\n" % year)
     ey = min(year+10,end.year)
     (ndyr,dtyr) = get_sample_cube(datetime.datetime(year,1,1,0,0),
                                   datetime.datetime(ey,12,31,23,59),
+                                  climatology=n,
                                   new_grid=egrid,rstate=rst)
     dts.extend(dtyr)
     if ndata is None:
@@ -53,7 +64,7 @@ canvas=FigureCanvas(fig)
 matplotlib.rc('image',aspect='auto')
 
 # Add a textured grey background
-s=(2000,600)
+s=(2000,100)
 ax2 = fig.add_axes([0,0,1,1],facecolor='green')
 ax2.set_axis_off() # Don't want surrounding x and y axis
 nd2=numpy.random.rand(s[1],s[0])
@@ -87,4 +98,4 @@ img = ax.pcolorfast(x,y,numpy.cbrt(ndata),
                         vmax=1.7,
                         zorder=100)
 
-fig.savefig('HadCRUT5_E-grid.png')
+fig.savefig('20CRv3_E-grid.png')
