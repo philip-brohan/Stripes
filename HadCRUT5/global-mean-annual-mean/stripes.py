@@ -17,24 +17,9 @@ from matplotlib.patches import Rectangle
 start=datetime.datetime(1851,1,1,0,0)
 end=datetime.datetime(2018,12,31,23,59)
 
-# Choose one ensemble member (arbitrarily)
-member = numpy.random.randint(100)+1
+from get_sample import get_sample_cube
 
-# Load the HadCRUT5 analysis data
-h=iris.load_cube("/scratch/hadcc/hadcrut5/build/HadCRUT5/analysis/"+
-                 "HadCRUT.5.0.0.0.analysis.anomalies.%d.nc" % member,
-                 iris.Constraint(time=lambda cell: start <= cell.point <=end))
-
-# Make annual averages
-iris.coord_categorisation.add_year(h,'time',name='year')
-h=h.aggregated_by('year',iris.analysis.MEAN)
-# Make area-weighted global means
-grid_areas = iris.analysis.cartography.area_weights(h)
-h_mean = h.collapsed(['latitude', 'longitude'],
-                           iris.analysis.MEAN,
-                           weights=grid_areas)
-dts = h.coords('time')[0].units.num2date(h.coords('time')[0].points)
-ndata=h_mean.data
+(ndata,dts) = get_sample_cube(start,end)
 
 # Plot the resulting array as a 2d colourmap
 fig=Figure(figsize=(19.2,6),              # Width, Height (inches)
@@ -83,4 +68,4 @@ img = ax.pcolorfast(x,y,numpy.cbrt(nd3),
                         vmax=1.0,
                         zorder=100)
 
-fig.savefig('basic.png')
+fig.savefig('HadCRUT5.png')
