@@ -52,10 +52,15 @@ for m in range(1,13):
                                          cell.point.year < (2010+1))
     h=iris.load('%s/ERA5/monthly_averaged_ensemble_members/t2m.nc' % 
                                                    os.getenv('SCRATCH'),
-                 iris.Constraint(name='2 metre temperature') & mc)[1]
+                 iris.Constraint(name='2 metre temperature') & mc)
+    # ERA5 data bug - get a masked copy along with the data
+    #   pick the real version.
+    if numpy.ma.is_masked(h[0].data):
+        h = h[1]
+    else:
+        h = h[0]
     n5.append(h.extract(mc).collapsed(['time','ensemble_member'],
                                      iris.analysis.MEAN))
-
 
 for month in range(1,13):
 
@@ -76,7 +81,11 @@ for month in range(1,13):
     for member in range(10):
         m = iris.load('%s/ERA5/monthly_averaged_ensemble_members/t2m.nc' %
                                                            os.getenv('SCRATCH'),
-                          iris.Constraint(ensemble_member=member) & mc)[1]
+                          iris.Constraint(ensemble_member=member) & mc)
+        if numpy.ma.is_masked(m[0].data):
+            m = m[1]
+        else:
+            m = m[0]
 
         m = m - n5[month-1]
 
@@ -92,3 +101,6 @@ for month in range(1,13):
     # Store
     dfile = "%s/%04d%02d.pkl" % (args.opdir,args.year,month)
     pickle.dump( ndata, open( dfile, "wb" ) )
+    print("Wibble %04d %02d" % (args.year,month))
+    print("Wibble %f" % numpy.mean(ndata))
+
