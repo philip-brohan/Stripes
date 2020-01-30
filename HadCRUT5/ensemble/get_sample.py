@@ -8,6 +8,7 @@ import datetime
 
 def get_sample_cube(start=datetime.datetime(1851,1,1,0,0),
                     end=datetime.datetime(2018,12,31,23,59),
+                    climatology=None,
                     new_grid=None,rstate=None):
 
     # Choose ten ensemble members (Should be half odd and half even,
@@ -28,6 +29,15 @@ def get_sample_cube(start=datetime.datetime(1851,1,1,0,0),
        m = iris.load_cube("/scratch/hadcc/hadcrut5/build/HadCRUT5/analysis/"+
                      "HadCRUT.5.0.0.0.analysis.anomalies.%d.nc" % member,
                      iris.Constraint(time=lambda cell: start <= cell.point <=end))
+
+       # It's an anomaly dataset, but we still sometimes need a climatology
+       #  to re-base the anomalies to a different period.
+       if climatology is not None:
+           dts = m.coords('time')[0].units.num2date(m.coords('time')[0].points)
+           for tidx in range(len(dts)):
+               midx=dts[tidx].month-1
+               m.data[tidx,:,:] -= climatology[midx].data
+
        if new_grid is not None:
            m = m.regrid(new_grid,iris.analysis.Nearest())
        h.append(m)

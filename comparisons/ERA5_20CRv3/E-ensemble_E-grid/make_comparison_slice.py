@@ -101,6 +101,4 @@ for month in range(1,13):
     # Store
     dfile = "%s/%04d%02d.pkl" % (args.opdir,args.year,month)
     pickle.dump( ndata, open( dfile, "wb" ) )
-    print("Wibble %04d %02d" % (args.year,month))
-    print("Wibble %f" % numpy.mean(ndata))
 
