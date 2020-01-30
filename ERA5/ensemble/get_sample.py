@@ -29,9 +29,15 @@ def get_sample_cube(start=datetime.datetime(1851,1,1,0,0),
                                                  cell.point.year < (climend+1))
             h=iris.load('%s/ERA5/monthly_averaged_ensemble_members/t2m.nc' % 
                                                            os.getenv('SCRATCH'),
-                         iris.Constraint(name='2 metre temperature') & mc)[1]
+                         iris.Constraint(name='2 metre temperature') & mc)
+            # ERA5 data bug - get a masked copy along with the data
+            #   pick the real version.
+            if numpy.ma.is_masked(h[0].data):
+                h = h[1]
+            else:
+                h = h[0]
             climatology.append(h.extract(mc).collapsed(['time','ensemble_member'],
-                                                                   iris.analysis.MEAN))
+                                                                       iris.analysis.MEAN))
 
     # Load the ERA5 data
     h=[]
@@ -39,7 +45,11 @@ def get_sample_cube(start=datetime.datetime(1851,1,1,0,0),
         m = iris.load('%s/ERA5/monthly_averaged_ensemble_members/t2m.nc' %
                                                            os.getenv('SCRATCH'),
                           iris.Constraint(ensemble_member=member) & \
-                          iris.Constraint(time=lambda cell: start <= cell.point <=end))[1]
+                          iris.Constraint(time=lambda cell: start <= cell.point <=end))
+        if numpy.ma.is_masked(m[0].data):
+            m = m[1]
+        else:
+            m = m[0]
 
         dts = m.coords('time')[0].units.num2date(m.coords('time')[0].points)
 

@@ -27,7 +27,13 @@ for m in range(1,13):
                                          cell.point.year < (2010+1))
     h=iris.load('%s/ERA5/monthly_averaged_ensemble_members/t2m.nc' % 
                                                    os.getenv('SCRATCH'),
-                 iris.Constraint(name='2 metre temperature') & mc)[1]
+                 iris.Constraint(name='2 metre temperature') & mc)
+    # ERA5 data bug - get a masked copy along with the data
+    #   pick the real version.
+    if numpy.ma.is_masked(h[0].data):
+        h = h[1]
+    else:
+        h = h[0]
     climatology.append(h.extract(mc).collapsed(['time','ensemble_member'],
                                                            iris.analysis.MEAN))
 
