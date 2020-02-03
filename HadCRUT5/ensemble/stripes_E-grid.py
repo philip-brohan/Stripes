@@ -63,7 +63,7 @@ def add_latline(ax,latitude):
 
 # Add a textured grey background
 s=(2000,600)
-ax2 = fig.add_axes([0,0.05,1,1],facecolor='green')
+ax2 = fig.add_axes([0,0.05,1,0.95],facecolor='green')
 ax2.set_axis_off() # Don't want surrounding x and y axis
 nd2=numpy.random.rand(s[1],s[0])
 clrs=[]
@@ -78,7 +78,7 @@ img = ax2.pcolormesh(x,y,nd2,
                         zorder=10)
 
 # Plot the stripes
-ax = fig.add_axes([0,0.05,1,1],facecolor='black',
+ax = fig.add_axes([0,0.05,1,0.95],facecolor='black',
                   xlim=((start+datetime.timedelta(days=1)).timestamp(),
                         (end-datetime.timedelta(days=1)).timestamp()),
                   ylim=(0,1))
