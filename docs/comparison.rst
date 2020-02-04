@@ -19,7 +19,7 @@ This does look broadly similar to :doc:`the HadCRUT5 version <datasets/observati
    :align: center
    :figwidth: 95%
 
-   At the top, the :doc:`extended stripes from HadCRUT5 <datasets/observations/HadCRUT5/ensemble/index>`. In the middle, the :doc:`extended stripes from EUSTACE <datasets/observations/EUSTACE/ensemble-monthly/index>`. At the bottom, the difference between them (HadCRUT5-EUSTACE). (:doc:`Figure source <datasets/comparisons/HadCRUT5_EUSTACE/ensemble-E-grid/index>`).
+   At the top, the :doc:`extended stripes from HadCRUT5 <datasets/observations/HadCRUT5/ensemble/index>`. In the middle, the :doc:`extended stripes from EUSTACE <datasets/observations/EUSTACE/ensemble-monthly/index>`. At the bottom, the difference between them (HadCRUT5-EUSTACE). (:doc:`Figure source <datasets/comparisons/HadCRUT5_EUSTACE/ensemble_E-grid/index>`).
 
 The two datasets agree about recent global warming, ENSO, and the mid-20th-century polar warming. There are obvious disagreements in the early 1850s, the early 1940s (in the low-latitudes) and at the latitude-extremes of the EUSTACE dataset
 (even in recent years). To my eyes, these look more likely to be issues in EUSTACE than in HadCRUT, as we'd expect from the relative maturities of the two datasets.
@@ -31,7 +31,7 @@ It would be good to have a third opinion - let's try the :doc:`Twentieth Century
    :align: center
    :figwidth: 95%
 
-   At the top, the :doc:`extended stripes from HadCRUT5 <datasets/observations/HadCRUT5/ensemble/index>`. In the middle, the :doc:`extended stripes from 20CRv3 <datasets/reanalysis/20CRv3/monthly_ensemble_mean/index>`. At the bottom, the difference between them (HadCRUT5-20CRv3). (:doc:`Figure source <datasets/comparisons/HadCRUT5_20Crv3/H-ensemble-E-grid/index>`).
+   At the top, the :doc:`extended stripes from HadCRUT5 <datasets/observations/HadCRUT5/ensemble/index>`. In the middle, the :doc:`extended stripes from 20CRv3 <datasets/reanalysis/20CRv3/monthly_ensemble_mean/index>`. At the bottom, the difference between them (HadCRUT5-20CRv3). (:doc:`Figure source <datasets/comparisons/HadCRUT5_20CRv3/H-ensemble_E-grid/index>`).
 
 --------------------------------------------
 
