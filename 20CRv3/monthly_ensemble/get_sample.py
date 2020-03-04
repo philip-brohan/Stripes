@@ -49,7 +49,7 @@ def get_sample_cube(start=datetime.datetime(1851,1,1,0,0),
     # Load the model data
     e=[]
     dts=None
-    for member in range(1,11):
+    for member in range(1,2):
         m = []
         for year in range(start.year,end.year+1):
             
@@ -89,13 +89,14 @@ def get_sample_cube(start=datetime.datetime(1851,1,1,0,0),
             
     # Sample in Longitude
     s=e[0].data.shape
-    ndata=numpy.ma.array(numpy.zeros((s[0],s[1])),mask=True)
+    ndata=numpy.ma.array(numpy.zeros((s[0],s[2])),mask=True)
+    weights=numpy.sin(numpy.pi*numpy.linspace(0,1,s[1]))
     for t in range(s[0]):
-        for lat in range(s[1]):
+        for lat in range(s[2]):
             rand_m = numpy.random.randint(len(e))
-            rand_l = r_lon.randint(0,s[2])
-#            ndata[t,lat]=numpy.mean(e[rand_m].data[t,lat,:])
-            ndata[t,lat]=e[rand_m].data[t,lat,rand_l]
+            rand_l = r_lon.randint(0,s[1])
+            ndata[t,lat]=numpy.average(e[rand_m].data[t,:,lat],weights=weights)
+#            ndata[t,lat]=e[rand_m].data[t,lat,rand_l]
             
     return (ndata,dts)
 

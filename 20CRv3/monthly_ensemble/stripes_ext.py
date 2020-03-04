@@ -23,7 +23,7 @@ climatology=[]
 e=[]
 for year in range(1961,1990):
      h = None
-     for member in range(1,11):
+     for member in range(1,2):
          f=iris.load_cube('%s/20CR/version_3/monthly_means/%04d/TMP2m.%04d.mnmean_mem%03d.nc' % 
                                                            (os.getenv('SCRATCH'),year,year,member),
                          iris.Constraint(name='air_temperature'))

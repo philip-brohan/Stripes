@@ -38,6 +38,7 @@ def get_sample_cube(start=cftime._cftime.Datetime360Day(1851,1,1),
         midx=dts[tidx].month-1
         h.data[tidx,:,:] -= n[midx].data
 
+
     # Sample in Longitude
     p=h.extract(iris.Constraint(longitude=0))
     s=h.data.shape
