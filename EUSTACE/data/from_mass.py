@@ -42,6 +42,8 @@ def unarchive(year):
     
 
 for year in range(startyear,endyear+1):
+    if os.path.isfile("%s/%04d/tas_global_eustace_0_%04d0619.nc" % (
+                        local_dir,year,year)): continue
     moose_file="%s/%04d.tgz" % (moose_dir,year)
     print(year)
     unarchive(year)
