@@ -8,8 +8,18 @@ import datetime
 import subprocess
 import time
 
-start=datetime.date(1850,1,1)
-end=datetime.date(2015,12,31)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--startyear",
+                    type=int,required=False,
+                    default=1850)
+parser.add_argument("--endyear",
+                    type=int,required=False,
+                    default=2015)
+args = parser.parse_args()
+
+start=datetime.date(args.startyear,1,1)
+end=datetime.date(args.endyear,12,31)
 
 base_url=("http://dap.ceda.ac.uk/thredds/fileServer/"+
          "neodc/eustace/data/combined/mohc/eustace/"+

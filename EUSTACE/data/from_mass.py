@@ -18,8 +18,15 @@ if not moose.check_moose_commands_enabled(moose.MOOSE_LS):
 if not moose.check_moose_commands_enabled(moose.MOOSE_GET):
     raise Exception("'moo get' disabled")
 
-startyear=1851
-endyear=2015
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--startyear",
+                    type=int,required=False,
+                    default=1850)
+parser.add_argument("--endyear",
+                    type=int,required=False,
+                    default=2015)
+args = parser.parse_args()
 
 moose_dir=("moose://adhoc/users/philip.brohan/EUSTACE/1.0/")
 
@@ -41,7 +48,7 @@ def unarchive(year):
     os.remove(tar_file)
     
 
-for year in range(startyear,endyear+1):
+for year in range(args.startyear,args.endyear+1):
     if os.path.isfile("%s/%04d/tas_global_eustace_0_%04d0619.nc" % (
                         local_dir,year,year)): continue
     moose_file="%s/%04d.tgz" % (moose_dir,year)

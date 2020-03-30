@@ -18,8 +18,15 @@ if not moose.check_moose_commands_enabled(moose.MOOSE_LS):
 if not moose.check_moose_commands_enabled(moose.MOOSE_PUT):
     raise Exception("'moo put' disabled")
 
-startyear=1850
-endyear=2015
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--startyear",
+                    type=int,required=False,
+                    default=1850)
+parser.add_argument("--endyear",
+                    type=int,required=False,
+                    default=2015)
+args = parser.parse_args()
 
 moose_dir=("moose://adhoc/users/philip.brohan/EUSTACE/1.0/")
 if moose.run_moose_command('moo test %s' % moose_dir)[0]!='true':
@@ -39,7 +46,7 @@ def archive(year):
     os.remove(tar_file)
     
 
-for year in range(startyear,endyear+1):
+for year in range(args.startyear,args.endyear+1):
     moose_file="%s/%04d.tgz" % (moose_dir,year)
     if moose.run_moose_command('moo test %s' % moose_file)[0]!='true':
         print(year)
