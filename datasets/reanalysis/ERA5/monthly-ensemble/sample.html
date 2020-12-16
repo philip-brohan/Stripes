@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Get data sample to plot as stripes &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" href="../../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get data sample to plot as stripes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="get-data-sample-to-plot-as-stripes">
+<h1>Get data sample to plot as stripes<a class="headerlink" href="#get-data-sample-to-plot-as-stripes" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the sample cube for ERA5</span>
+<span class="c1"># Monthly, resolved in latitude, sampling in longitude, sampling the ensemble.</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">iris</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="k">def</span> <span class="nf">get_sample_cube</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1851</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="n">end</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">31</span><span class="p">,</span><span class="mi">23</span><span class="p">,</span><span class="mi">59</span><span class="p">),</span>
+                    <span class="n">climatology</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">climstart</span><span class="o">=</span><span class="mi">1981</span><span class="p">,</span><span class="n">climend</span><span class="o">=</span><span class="mi">2010</span><span class="p">,</span>
+                    <span class="n">new_grid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">rstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1"># Might want the longitude random sampling to be reproducible</span>
+    <span class="k">if</span> <span class="n">rstate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">r_long</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">r_long</span> <span class="o">=</span> <span class="n">rstate</span>
+    <span class="c1"># The ensemble random sampling need not be reproducible</span>
+    <span class="n">r_ensemble</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># Make the climatology, if not supplied</span>
+    <span class="k">if</span> <span class="n">climatology</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">climatology</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">13</span><span class="p">):</span>
+            <span class="n">mc</span><span class="o">=</span><span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cell</span><span class="p">:</span> <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="n">m</span> <span class="ow">and</span> \
+                                                 <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">year</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">climstart</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> \
+                                                 <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">climend</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">h</span><span class="o">=</span><span class="n">iris</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/ERA5/monthly_averaged_ensemble_members/t2m.nc&#39;</span> <span class="o">%</span> 
+                                                           <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SCRATCH&#39;</span><span class="p">),</span>
+                         <span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;2 metre temperature&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">mc</span><span class="p">)</span>
+            <span class="c1"># ERA5 data bug - get a masked copy along with the data</span>
+            <span class="c1">#   pick the real version.</span>
+            <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">climatology</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">mc</span><span class="p">)</span><span class="o">.</span><span class="n">collapsed</span><span class="p">([</span><span class="s1">&#39;time&#39;</span><span class="p">,</span><span class="s1">&#39;ensemble_member&#39;</span><span class="p">],</span>
+                                                                       <span class="n">iris</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">MEAN</span><span class="p">))</span>
+
+    <span class="c1"># Load the ERA5 data</span>
+    <span class="n">h</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/ERA5/monthly_averaged_ensemble_members/t2m.nc&#39;</span> <span class="o">%</span>
+                                                           <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SCRATCH&#39;</span><span class="p">),</span>
+                          <span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">ensemble_member</span><span class="o">=</span><span class="n">member</span><span class="p">)</span> <span class="o">&amp;</span> \
+                          <span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cell</span><span class="p">:</span> <span class="n">start</span> <span class="o">&lt;=</span> <span class="n">cell</span><span class="o">.</span><span class="n">point</span> <span class="o">&lt;=</span><span class="n">end</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">dts</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">num2date</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+
+        <span class="c1"># Anomalise</span>
+        <span class="k">for</span> <span class="n">tidx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dts</span><span class="p">)):</span>
+            <span class="n">midx</span><span class="o">=</span><span class="n">dts</span><span class="p">[</span><span class="n">tidx</span><span class="p">]</span><span class="o">.</span><span class="n">month</span><span class="o">-</span><span class="mi">1</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">tidx</span><span class="p">,:,:]</span> <span class="o">-=</span> <span class="n">climatology</span><span class="p">[</span><span class="n">midx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">new_grid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">regrid</span><span class="p">(</span><span class="n">new_grid</span><span class="p">,</span><span class="n">iris</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Nearest</span><span class="p">())</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="n">dts</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">num2date</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+
+    <span class="c1"># Pick a random longitude at each month</span>
+    <span class="n">s</span><span class="o">=</span><span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">ndata</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span><span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+       <span class="k">for</span> <span class="n">lat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+           <span class="n">member</span> <span class="o">=</span> <span class="n">r_ensemble</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+           <span class="n">rand_l</span> <span class="o">=</span> <span class="n">r_long</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+           <span class="n">ndata</span><span class="p">[</span><span class="n">t</span><span class="p">,</span><span class="n">lat</span><span class="p">]</span><span class="o">=</span><span class="n">h</span><span class="p">[</span><span class="n">member</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">t</span><span class="p">,</span><span class="n">lat</span><span class="p">,</span><span class="n">rand_l</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">ndata</span><span class="p">,</span><span class="n">dts</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get data sample to plot as stripes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

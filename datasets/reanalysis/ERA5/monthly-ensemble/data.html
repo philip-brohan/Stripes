@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Download monthly-mean ensda T2m from ERA5 &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" href="../../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Download monthly-mean ensda T2m from ERA5</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="download-monthly-mean-ensda-t2m-from-era5">
+<h1>Download monthly-mean ensda T2m from ERA5<a class="headerlink" href="#download-monthly-mean-ensda-t2m-from-era5" title="Permalink to this headline">¶</a></h1>
+<p>Uses the <a class="reference external" href="https://cds.climate.copernicus.eu/api-how-to">CDS API</a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="c1"># Get the monthly T2m data from ERA5 enda</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">cdsapi</span>
+
+<span class="n">opdir</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/ERA5/monthly_averaged_ensemble_members&quot;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SCRATCH&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">opdir</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">opdir</span><span class="p">)</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">cdsapi</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+
+<span class="n">c</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span>
+    <span class="s1">&#39;reanalysis-era5-single-levels-monthly-means&#39;</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;netcdf&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;product_type&#39;</span><span class="p">:</span> <span class="s1">&#39;monthly_averaged_ensemble_members&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;variable&#39;</span><span class="p">:</span> <span class="s1">&#39;2m_temperature&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;1979&#39;</span><span class="p">,</span> <span class="s1">&#39;1980&#39;</span><span class="p">,</span> <span class="s1">&#39;1981&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1982&#39;</span><span class="p">,</span> <span class="s1">&#39;1983&#39;</span><span class="p">,</span> <span class="s1">&#39;1984&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1985&#39;</span><span class="p">,</span> <span class="s1">&#39;1986&#39;</span><span class="p">,</span> <span class="s1">&#39;1987&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1988&#39;</span><span class="p">,</span> <span class="s1">&#39;1989&#39;</span><span class="p">,</span> <span class="s1">&#39;1990&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1991&#39;</span><span class="p">,</span> <span class="s1">&#39;1992&#39;</span><span class="p">,</span> <span class="s1">&#39;1993&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1994&#39;</span><span class="p">,</span> <span class="s1">&#39;1995&#39;</span><span class="p">,</span> <span class="s1">&#39;1996&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1997&#39;</span><span class="p">,</span> <span class="s1">&#39;1998&#39;</span><span class="p">,</span> <span class="s1">&#39;1999&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2000&#39;</span><span class="p">,</span> <span class="s1">&#39;2001&#39;</span><span class="p">,</span> <span class="s1">&#39;2002&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2003&#39;</span><span class="p">,</span> <span class="s1">&#39;2004&#39;</span><span class="p">,</span> <span class="s1">&#39;2005&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2006&#39;</span><span class="p">,</span> <span class="s1">&#39;2007&#39;</span><span class="p">,</span> <span class="s1">&#39;2008&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2009&#39;</span><span class="p">,</span> <span class="s1">&#39;2010&#39;</span><span class="p">,</span> <span class="s1">&#39;2011&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2012&#39;</span><span class="p">,</span> <span class="s1">&#39;2013&#39;</span><span class="p">,</span> <span class="s1">&#39;2014&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2015&#39;</span><span class="p">,</span> <span class="s1">&#39;2016&#39;</span><span class="p">,</span> <span class="s1">&#39;2017&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2018&#39;</span><span class="p">,</span> <span class="s1">&#39;2019&#39;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;month&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;01&#39;</span><span class="p">,</span> <span class="s1">&#39;02&#39;</span><span class="p">,</span> <span class="s1">&#39;03&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;04&#39;</span><span class="p">,</span> <span class="s1">&#39;05&#39;</span><span class="p">,</span> <span class="s1">&#39;06&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;07&#39;</span><span class="p">,</span> <span class="s1">&#39;08&#39;</span><span class="p">,</span> <span class="s1">&#39;09&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;10&#39;</span><span class="p">,</span> <span class="s1">&#39;11&#39;</span><span class="p">,</span> <span class="s1">&#39;12&#39;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="s1">&#39;00:00&#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/t2m.nc&quot;</span> <span class="o">%</span> <span class="n">opdir</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Download monthly-mean ensda T2m from ERA5</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

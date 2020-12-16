@@ -1,1 +1,0 @@
-../../HadCRUT5_EUSTACE/ensemble_E-grid/get_HadCRUT5_sample.py

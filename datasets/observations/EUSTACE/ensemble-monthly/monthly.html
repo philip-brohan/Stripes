@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Make monthly averages from daily EUSTACE data &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" href="../../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Make monthly averages from daily EUSTACE data</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="make-monthly-averages-from-daily-eustace-data">
+<h1>Make monthly averages from daily EUSTACE data<a class="headerlink" href="#make-monthly-averages-from-daily-eustace-data" title="Permalink to this headline">¶</a></h1>
+<p>The only complication in this process is in handling missing data. I chose (arbitrarily) that a monthly average would be the mean of all the available daily averages in that month if at least 20 daily values were available (and missing otherwise).</p>
+<p>166 years of daily data is a lot of averaging, so parallelise it by writing a script to do one month</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="c1"># Make monthly means from daily EUSTACE1.0 data.</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">iris</span>
+<span class="kn">from</span> <span class="nn">calendar</span> <span class="kn">import</span> <span class="n">monthrange</span>
+
+<span class="c1"># Fix dask SPICE bug</span>
+<span class="kn">import</span> <span class="nn">dask</span>
+<span class="n">dask</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">scheduler</span><span class="o">=</span><span class="s1">&#39;single-threaded&#39;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--month&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Integer month&quot;</span><span class="p">,</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--year&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Integer year&quot;</span><span class="p">,</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+<span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/EUSTACE/1.0/&quot;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SCRATCH&#39;</span><span class="p">)</span>
+
+<span class="n">op_dir</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/monthly/</span><span class="si">%04d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">root_dir</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">op_dir</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">op_dir</span><span class="p">)</span>
+
+<span class="n">op_file</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%02d</span><span class="s2">.nc&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">op_dir</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">month</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">average_over_month</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
+    <span class="n">accum</span> <span class="o">=</span> <span class="kc">None</span>  
+    <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">monthrange</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">year</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">month</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+      <span class="n">inst</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">load_cube</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%04d</span><span class="s2">/tas_global_eustace_0_</span><span class="si">%04d%02d%02d</span><span class="s2">.nc&quot;</span> <span class="o">%</span>
+                              <span class="p">(</span><span class="n">root_dir</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">year</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                               <span class="n">args</span><span class="o">.</span><span class="n">month</span><span class="p">,</span><span class="n">dy</span><span class="p">),</span>
+                             <span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="n">cube_func</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">var_name</span> <span class="o">==</span> <span class="n">variable</span><span class="p">)))</span>
+      <span class="k">if</span> <span class="n">accum</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="n">accum</span> <span class="o">=</span> <span class="n">inst</span>
+          <span class="n">count</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+          <span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="kc">False</span>
+          <span class="n">count</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="mi">0</span>
+          <span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">accum</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="o">==</span><span class="kc">False</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">else</span><span class="p">:</span>
+          <span class="n">accum</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">inst</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="o">==</span><span class="kc">False</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+          <span class="n">accum</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">accum</span><span class="o">.</span><span class="n">data</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="mi">0</span>
+          <span class="n">accum</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">accum</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">inst</span><span class="o">.</span><span class="n">data</span>
+          <span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">inst</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="o">==</span><span class="kc">False</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">accum</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="o">&gt;=</span><span class="mi">20</span><span class="p">]</span> <span class="o">/=</span> <span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="o">&gt;=</span><span class="mi">20</span><span class="p">]</span>
+    <span class="n">accum</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">count</span><span class="o">.</span><span class="n">data</span><span class="o">&lt;</span><span class="mi">20</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">accum</span><span class="p">)</span>
+    
+<span class="n">avgs</span><span class="o">=</span><span class="p">[]</span>
+<span class="n">avgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">average_over_month</span><span class="p">(</span><span class="s1">&#39;tas&#39;</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">avgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">average_over_month</span><span class="p">(</span><span class="s1">&#39;tasensemble_</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">member</span><span class="p">))</span>                       
+
+<span class="n">iris</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">avgs</span><span class="p">,</span><span class="n">op_file</span><span class="p">,</span>
+          <span class="n">fill_value</span><span class="o">=-</span><span class="mi">32768</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and then making a task to run that script once for each month in the period,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="c1"># Scripts to make means for every month</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="mi">1850</span><span class="p">,</span><span class="mi">2016</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">month</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">13</span><span class="p">):</span>
+        <span class="n">opf</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/EUSTACE/1.0/monthly/</span><span class="si">%04d</span><span class="s2">/</span><span class="si">%02d</span><span class="s2">.nc&quot;</span> <span class="o">%</span>\
+                      <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SCRATCH&#39;</span><span class="p">),</span><span class="n">year</span><span class="p">,</span><span class="n">month</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">opf</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;./make_means_by_month.py --year=</span><span class="si">%d</span><span class="s2"> --month=</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="n">year</span><span class="p">,</span><span class="n">month</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>and then running those tasks in parallel.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Make monthly averages from daily EUSTACE data</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

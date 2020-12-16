@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EUSTACE: Ensemble reduced to monthly averages &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" href="../../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">EUSTACE: Ensemble reduced to monthly averages</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="eustace-ensemble-reduced-to-monthly-averages">
+<h1>EUSTACE: Ensemble reduced to monthly averages<a class="headerlink" href="#eustace-ensemble-reduced-to-monthly-averages" title="Permalink to this headline">¶</a></h1>
+<div class="figure align-center" id="id1" style="width: 95%">
+<a class="reference internal image-reference" href="../../../../_images/ensemble1.png"><img alt="../../../../_images/ensemble1.png" src="../../../../_images/ensemble1.png" style="width: 95%;" /></a>
+<p class="caption"><span class="caption-text">Temperature anomalies (w.r.t. 1961-90) from the <a class="reference external" href="https://www.eustaceproject.org/">EUSTACE</a> dataset after regridding to monthly resolution. The vertical axis is latitude (south pole at the bottom, north pole at the top), and each pixel is from a randomly selected longitude and ensemble member. Grey areas show regions where EUSTACE has no data.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>Here I’ve used EUSTACE 1.0 - daily-mean temperature actuals on a 0.5 degree global grid back to 1850. For purposes of comparison with HadCRUT it needs to be reduced to monthly means and to anomalies with respect to the 1961-90 average. The complication in this process is in handling missing data. I chose (arbitrarily) that a monthly average would be the mean of all the available daily averages in that month if at least 20 daily values were available (and missing otherwise). Similarly, a monthly normal is the mean of all available monthly averages in the period 1961-90 if at least 20 monthly averages are available (and missing otherwise).</p>
+<p>Note that EUSTACE is a large dataset (the 1.0 gridded fields take up 1.7 Tb on disk and may take some time to download).</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../data.html">Script to download the data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="monthly.html">Script to make monthly averages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="normals.html">Script to make 1961-90 monthly normals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Script to make the plot</a></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">EUSTACE: Ensemble reduced to monthly averages</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
