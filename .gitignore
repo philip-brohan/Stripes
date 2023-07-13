@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Sphinx documentation
+docs/_build/
+
+# Images and text files
+*.png
+*run*.txt
+*.out
+*.pdf
+
+# Emacs junk
+*\#
+*~
+\#*\#
+
+# Python junk
+build/
+*.egg
+
+
+# Apple junk
+Thumbs.db
+
+# Temporary files
+*.orig
+*.rej
+*.pkl
+tmp 
+
+# Binaries
+*.pptx
+*.key
+*.ppt 
+
