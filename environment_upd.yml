@@ -1,0 +1,10 @@
+name: Stripes2
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - iris=3.6
+  - xarray
+  - zarr
+  - gcsfs

@@ -1,6 +1,6 @@
 name: Stripes
 channels:
-  - anaconda
+  - defaults
   - conda-forge
 dependencies:
   - python=3.7.*
