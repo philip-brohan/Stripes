@@ -40,11 +40,12 @@ matplotlib.rc("image", aspect="auto")
 # White background
 axb = fig.add_axes(
     [0.0, 0.0, 1.0, 1.0],
-    facecolor='white',
-    xmargin=0,ymargin=0,
-    )
+    facecolor="white",
+    xmargin=0,
+    ymargin=0,
+)
 axb.set_axis_off()
-axb.fill([0,1,1,0],[0,0,1,1],'white')
+axb.fill([0, 1, 1, 0], [0, 0, 1, 1], "white")
 
 
 def add_latline(ax, latitude):
@@ -95,8 +96,17 @@ ax.set_axis_off()
 ndata = numpy.transpose(ndata)
 s = ndata.shape
 y = numpy.linspace(0, 1, s[0] + 1)
-x = [datetime.datetime.fromisoformat((a - datetime.timedelta(days=15)).isoformat()).timestamp() for a in dts]
-x.append(datetime.datetime.fromisoformat((dts[-1] + datetime.timedelta(days=15)).isoformat()).timestamp())
+x = [
+    datetime.datetime.fromisoformat(
+        (a - datetime.timedelta(days=15)).isoformat()
+    ).timestamp()
+    for a in dts
+]
+x.append(
+    datetime.datetime.fromisoformat(
+        (dts[-1] + datetime.timedelta(days=15)).isoformat()
+    ).timestamp()
+)
 img = ax.pcolorfast(
     x, y, numpy.cbrt(ndata), cmap="RdYlBu_r", alpha=1.0, vmin=-2.0, vmax=2.0, zorder=100
 )
@@ -145,7 +155,12 @@ for year in range(1860, 2023, 10):
 ax_cb = fig.add_axes([0.925, 0.06125, 0.05, 0.9])
 ax_cb.set_axis_off()
 cb = fig.colorbar(
-    img, ax=ax_cb, location="right", orientation="vertical", fraction=1.0, label='Anomaly (\N{degree sign}C)'
+    img,
+    ax=ax_cb,
+    location="right",
+    orientation="vertical",
+    fraction=1.0,
+    label="Anomaly (\N{degree sign}C)",
 )
 
 
