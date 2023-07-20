@@ -15,6 +15,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
+from matplotlib.colors import BoundaryNorm
 
 start = datetime.datetime(1851, 1, 1, 0, 0)
 end = datetime.datetime(2022, 12, 31, 23, 59)
@@ -107,8 +108,15 @@ x.append(
         (dts[-1] + datetime.timedelta(days=15)).isoformat()
     ).timestamp()
 )
+levels=[-5, -2, -1, -0.5, -0.2, 0.2, 0.5, 1, 2, 5]
+cmap=matplotlib.colormaps["RdYlBu_r"]
 img = ax.pcolorfast(
-    x, y, numpy.cbrt(ndata), cmap="RdYlBu_r", alpha=1.0, vmin=-2.0, vmax=2.0, zorder=100
+    x,
+    y,
+    ndata,
+    norm=BoundaryNorm(levels,ncolors=cmap.N, clip=True),
+    cmap=cmap,
+    zorder=100,
 )
 
 # Add a latitude grid
@@ -160,6 +168,7 @@ cb = fig.colorbar(
     location="right",
     orientation="vertical",
     fraction=1.0,
+    ticks = levels,
     label="Anomaly (\N{degree sign}C)",
 )
 
