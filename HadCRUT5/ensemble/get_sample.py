@@ -34,9 +34,9 @@ def get_sample_cube(
     h = []
     for member in members:
         m = iris.load_cube(
-            "/data/users/hadobs/hadcrut5/HadCRUT.5.0.1.0-202305/"
+            "/data/users/hadobs/hadcrut5/HadCRUT.5.0.2.0-202312/"
             + "hadcrut5/dev/build/HadCRUT5/analysis/"
-            + "HadCRUT.5.0.1.0.analysis.anomalies.%d.nc" % member,
+            + "HadCRUT.5.0.2.0.analysis.anomalies.%d.nc" % member,
             iris.Constraint(time=lambda cell: start <= cell.point <= end),
         )
         m.coord("latitude").coord_system = coord_s

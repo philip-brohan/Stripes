@@ -1,4 +1,4 @@
-name: Stripes2
+name: Stripes
 channels:
   - defaults
   - conda-forge
@@ -8,3 +8,4 @@ dependencies:
   - xarray
   - zarr
   - gcsfs
+  - cmocean
