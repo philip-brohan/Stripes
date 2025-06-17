@@ -3,4 +3,13 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.formatting.provider": "none"
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "/bin/bash",
+            "args": ["-c", "eval \"$(conda shell.bash hook)\" && conda activate Stripes && exec bash"]
+        }
+    },
+    "python.defaultInterpreterPath": "/data/users/philip.brohan/conda/environments/Stripes/bin/python"
+
 }

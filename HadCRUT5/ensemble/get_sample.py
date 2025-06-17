@@ -5,10 +5,27 @@ import os
 import iris
 import iris.coord_systems
 import iris.fileformats
-import numpy
+import numpy as np
 import datetime
 
 coord_s = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+
+
+# I want the time coordinate as datetime, not cftime
+def convert_single_time(cftime_obj):
+    """Convert a single cftime object to datetime"""
+    return datetime.datetime(
+        cftime_obj.year,
+        cftime_obj.month,
+        cftime_obj.day,
+        cftime_obj.hour,
+        cftime_obj.minute,
+        cftime_obj.second,
+    )
+
+
+# Create vectorized version
+cftime_to_datetime = np.vectorize(convert_single_time)
 
 
 def get_sample_cube(
@@ -24,18 +41,17 @@ def get_sample_cube(
 
     # Might want the longitude random sampling to be reproducible
     if rstate is None:
-        r_long = numpy.random.RandomState(seed=None)
+        r_long = np.random.RandomState(seed=None)
     else:
         r_long = rstate
     # The ensemble random sampling need not be reproducible
-    r_ensemble = numpy.random.RandomState(seed=None)
+    r_ensemble = np.random.RandomState(seed=None)
 
     # Load the HadCRUT5 analysis data
     h = []
     for member in members:
         m = iris.load_cube(
-            "/data/users/hadobs/hadcrut5/HadCRUT.5.0.2.0-202312/"
-            + "hadcrut5/dev/build/HadCRUT5/analysis/"
+            "/data/scratch/philip.brohan/HadCRUT/version_5.0.2.0/"
             + "HadCRUT.5.0.2.0.analysis.anomalies.%d.nc" % member,
             iris.Constraint(time=lambda cell: start <= cell.point <= end),
         )
@@ -54,10 +70,11 @@ def get_sample_cube(
         h.append(m)
 
     dts = h[0].coords("time")[0].units.num2date(h[0].coords("time")[0].points)
+    dts = cftime_to_datetime(dts)
 
     # Pick a random longitude at each month
     s = h[0].data.shape
-    ndata = numpy.ma.array(numpy.zeros((s[0], s[1])), mask=True)
+    ndata = np.ma.array(np.zeros((s[0], s[1])), mask=True)
     for t in range(s[0]):
         for lat in range(s[1]):
             member = r_ensemble.randint(len(members))
