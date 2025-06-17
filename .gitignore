@@ -37,3 +37,5 @@ tmp
 *.key
 *.ppt 
 
+# VSCode settings
+.vscode/
