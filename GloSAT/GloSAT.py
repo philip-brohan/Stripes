@@ -21,7 +21,7 @@ import numpy as np
 from utilities.utils import longitude_reduce, csmooth
 from utilities.grids import VRCube
 
-from GLOSAT.load import load_month
+from GloSAT.load import load_month
 
 
 import matplotlib
@@ -291,4 +291,4 @@ cb = fig.colorbar(
     ticks=[-2, -1, -0.5, 0, 0.5, 1, 2],
 )
 
-fig.savefig("%s/%s_%s_%s.png" % (".", "GLOSAT", args.reduce, args.convolve))
+fig.savefig("%s/%s_%s_%s.png" % (".", "GloSAT", args.reduce, args.convolve))

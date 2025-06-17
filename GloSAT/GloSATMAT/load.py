@@ -63,23 +63,6 @@ def load_decade(year, new_grid=None):
     return h[0]
 
 
-# Load the data for a decade
-def load_decade(year, new_grid=None):
-    m = iris.load_cube(
-        "/data/users/hadobs/cma_datasets/crutem4/release_data/current/gridded_fields/"
-        + "CRUTEM.4.6.0.0.anomalies.pp",
-        iris.Constraint(
-            time=lambda cell: cell.point.year >= year and cell.point.year < year + 10
-        ),
-    )
-    m.coord("latitude").coord_system = coord_s
-    m.coord("longitude").coord_system = coord_s
-    m.data.data[m.data.mask] = np.nan  # Mask the data
-    if new_grid is not None:
-        m = m.regrid(new_grid, iris.analysis.Nearest())
-    return m
-
-
 # Load the data for a month
 def load_month(year, month, new_grid=None):
 
