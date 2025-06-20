@@ -39,6 +39,34 @@ def longitude_reduce(choice, ndata, mask=None):
     raise Exception("Unsupported reduction choice %s" % choice)
 
 
+# Paired Longitude reduction - both datasets sample from the same grid point
+def longitude_reduce_paired(choice, ndata1, ndata2, mask=None):
+    nd2d1 = np.squeeze(ndata1)
+    result1 = np.ma.masked_array(np.full([nd2d1.shape[0], 1], np.nan))
+    result1[:] = np.ma.masked
+    nd2d2 = np.squeeze(ndata2)
+    result2 = result1.copy()
+    if mask is None:
+        mask = np.full(nd2d1.shape, False)
+    if choice == "sample":
+        for i in range(nd2d1.shape[0]):  # Iterate over latitudes
+            alat1 = nd2d1[i, :]
+            alat2 = nd2d2[i, :]
+            if len(alat1) > 0:
+                alat1 = alat1[~mask[i, :]]
+                alat2 = alat2[~mask[i, :]]
+                if len(alat1) > 0:
+                    random_idx = rng.integers(0, len(alat1))
+                    result1[i, 0] = alat1.data[random_idx]
+                    result2[i, 0] = alat2.data[random_idx]
+                    if ~np.isnan(result1[i, 0]):
+                        result1.mask[i, 0] = False
+                    if ~np.isnan(result2[i, 0]):
+                        result2.mask[i, 0] = False
+        return (result1, result2)
+    raise Exception("Unsupported reduction choice %s" % choice)
+
+
 # Convolution smoothing
 def csmooth(choice, ndata):
     ndata[ndata.mask] = np.nan

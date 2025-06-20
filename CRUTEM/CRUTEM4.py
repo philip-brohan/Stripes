@@ -3,32 +3,20 @@
 # CRUTEM stripes - anomalies.
 # Monthly, resolved in latitude,
 
-import os
-import sys
-import iris
-import iris.coord_systems
-import iris.fileformats
-
-coord_s = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-
-# I don't want warnings about sub-second time precision
-iris.FUTURE.date_microseconds = True
-
 import datetime
 import numpy as np
 
 from utilities.utils import longitude_reduce, csmooth
 from utilities.grids import VRCube
+from utilities.plot import plot_dataset
 
 from CRUTEM.load import load_month, get_land_mask
-
 
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 import matplotlib.colors as colors
-
 
 import argparse
 
@@ -84,7 +72,7 @@ parser.add_argument(
     "--endyear",
     type=int,
     required=False,
-    default=2023,
+    default=None,
 )
 parser.add_argument(
     "--lat_resolution",
@@ -101,6 +89,9 @@ parser.add_argument(
     action=LinkedArgumentsAction,
 )
 args = parser.parse_args()
+
+if args.endyear is None:
+    args.endyear = datetime.datetime.now().year
 
 start = datetime.datetime(args.startyear, 1, 1, 0, 0)
 end = datetime.datetime(args.endyear, 12, 31, 23)
@@ -151,147 +142,28 @@ norm = colors.BoundaryNorm(levels, cmap.N)
 fig = Figure(
     figsize=(16, 4.5),  # Width, Height (inches)
     dpi=300,
-    facecolor=(0.5, 0.5, 0.5, 1),
+    facecolor=(1, 1, 1, 1),
     edgecolor=None,
     linewidth=0.0,
-    frameon=False,
+    frameon=True,
     subplotpars=None,
     tight_layout=None,
 )
-font = {"size": 12}
+font = {"size": 16}
 matplotlib.rc("font", **font)
 canvas = FigureCanvas(fig)
 matplotlib.rc("image", aspect="auto")
 
-# White background for whole figure
-axb = fig.add_axes(
-    [0.0, 0.0, 1.0, 1.0],
-    facecolor="white",
-    xmargin=0,
-    ymargin=0,
-)
-axb.set_axis_off()
-axb.fill([0, 1, 1, 0], [0, 0, 1, 1], "white")
-
-# Add a textured grey background
-s = (2000, 600)
-ax2 = fig.add_axes([0.0, 0.05, 0.9, 0.95], facecolor="green")
-ax2.set_axis_off()
-nd2 = np.random.rand(s[1], s[0])
-clrs = []
-for shade in np.linspace(0.42 + 0.01, 0.36 + 0.01):
-    clrs.append((shade, shade, shade, 1))
-y = np.linspace(0, 1, s[1])
-x = np.linspace(0, 1, s[0])
-img = ax2.pcolormesh(
-    x,
-    y,
-    nd2,
-    cmap=matplotlib.colors.ListedColormap(clrs),
-    alpha=1.0,
-    shading="gouraud",
-    zorder=10,
-)
-
-# Plot the stripes
-ax = fig.add_axes(
-    [0.0, 0.05, 0.9, 0.95],
-    facecolor="black",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(1, 0),
-)
-ax.set_axis_off()
-
-s = ndata.shape
-y = 1.0 - np.linspace(0, 1, s[0] + 1)
-x = [(a - datetime.timedelta(days=15)).timestamp() for a in dts]
-x.append((dts[-1] + datetime.timedelta(days=15)).timestamp())
-img = ax.pcolorfast(x, y, ndata, cmap=cmap, alpha=1.0, norm=norm, zorder=100)
-
-# Add a latitude grid
-axg = fig.add_axes(
-    [0.0, 0.05, 0.9, 0.95],
-    facecolor="green",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(0, 1),
-)
-axg.set_axis_off()
-
-
-def add_latline(ax, latitude):
-    latl = (latitude + 90) / 180
-    ax.add_line(
-        Line2D(
-            [start.timestamp(), end.timestamp()],
-            [latl, latl],
-            linewidth=0.75,
-            color=(0.2, 0.2, 0.2, 1),
-            zorder=200,
-        )
-    )
-
-
-for lat in (-60, -30, 0, 30, 60):
-    add_latline(axg, lat)
-
-# Add a date grid
-axg = fig.add_axes(
-    [0.0, 0, 0.9, 1],
-    facecolor="green",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(0, 1),
-)
-axg.set_axis_off()
-
-
-def add_dateline(ax, year):
-    x = datetime.datetime(year, 1, 1, 0, 0).timestamp()
-    ax.add_line(
-        Line2D(
-            [x, x], [0.04, 1.0], linewidth=0.75, color=(0.2, 0.2, 0.2, 1), zorder=200
-        )
-    )
-    if (
-        year >= args.startyear + 5 and year <= args.endyear - 5
-    ):  # No space for label at the edges
-        # Add the year label
-        ax.text(
-            x,
-            0.024,
-            "%04d" % year,
-            horizontalalignment="center",
-            verticalalignment="center",
-            color="black",
-            clip_on=True,
-            zorder=200,
-        )
-
-
-for year in range((args.startyear // 10) * 10, args.endyear, 10):
-    if year == args.startyear or year == args.endyear:
-        continue
-    add_dateline(axg, year)
-
-# ColourBar
-ax_cb = fig.add_axes([0.925, 0.06125, 0.05, 0.9])
-ax_cb.set_axis_off()
-cb = fig.colorbar(
-    img,
-    ax=ax_cb,
-    location="right",
-    orientation="vertical",
-    fraction=1.0,
-    label="Anomaly (C)",
-    ticks=[-2, -1, -0.5, 0, 0.5, 1, 2],
+plot_dataset(
+    fig.add_axes([0, 0, 1, 1]),
+    dts,
+    ndata,
+    cmap=cmap,
+    norm=norm,
+    colorbar=True,
+    ticks=True,
+    ticks_fontsize=12,
+    cm_fontsize=8,
 )
 
 fig.savefig("%s/%s_%s_%s.png" % (".", "CRUTEM", args.reduce, args.convolve))

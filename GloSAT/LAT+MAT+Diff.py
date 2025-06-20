@@ -4,23 +4,12 @@
 # Monthly, resolved in latitude,
 # Comparison plot: MAT, LAT, and difference
 
-import os
-import sys
-import iris
-import iris.coord_systems
-import iris.fileformats
-
-coord_s = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-
-# I don't want warnings about sub-second time precision
-iris.FUTURE.date_microseconds = True
-
 import datetime
 import numpy as np
 
 from utilities.utils import longitude_reduce, csmooth
 from utilities.grids import VRCube
-from utilities.plot import add_latline, get_colorbar_location, texture_background
+from utilities.plot import plot_dataset
 
 from GloSAT.GloSATMAT.load import load_month as load_mat
 from GloSAT.GloSATLAT.load import load_month as load_lat
@@ -30,9 +19,7 @@ from GloSAT.GloSATMAT.load import get_land_mask as get_mat_land_mask
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib.lines import Line2D
 import matplotlib.colors as colors
-
 
 import argparse
 
@@ -88,7 +75,7 @@ parser.add_argument(
     "--endyear",
     type=int,
     required=False,
-    default=2025,
+    default=None,
 )
 parser.add_argument(
     "--lat_resolution",
@@ -106,6 +93,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+if args.endyear is None:
+    args.endyear = datetime.datetime.now().year
+
 start = datetime.datetime(args.startyear, 1, 1, 0, 0)
 end = datetime.datetime(args.endyear, 12, 31, 23)
 
@@ -119,9 +109,7 @@ mat_land_mask = get_mat_land_mask(new_grid=new_grid)
 
 
 # Load the data for each month and reduce member and meridional variation
-dts_lat = []
-dts_mat = []
-dts_difference = []
+dts = []
 ndata_lat = None
 ndata_mat = None
 ndata_difference = None
@@ -129,8 +117,8 @@ ndata_difference = None
 for year in range(start.year, end.year + 1):
     print(year)
     for month in range(1, 13):
+        dts.append(datetime.datetime(year, month, 15, 0))
         # LAT
-        dts_lat.append(datetime.datetime(year, month, 15, 0))
         mdata = load_lat(year, month, new_grid=new_grid)
         if mdata is None:
             ndmo = np.ma.MaskedArray(np.full((lat_land_mask.shape[0], 1), np.nan), True)
@@ -145,7 +133,6 @@ for year in range(start.year, end.year + 1):
             ndata_lat = np.concatenate((ndata_lat.data, ndmo.data), axis=1)
             ndata_lat = np.ma.MaskedArray(ndata_lat.data, np.isnan(ndata_lat.data))
         # MAT
-        dts_mat.append(datetime.datetime(year, month, 15, 0))
         mdata = load_mat(year, month, new_grid=new_grid)
         if mdata is None:
             ndmo = np.ma.MaskedArray(np.full((mat_land_mask.shape[0], 1), np.nan), True)
@@ -158,7 +145,6 @@ for year in range(start.year, end.year + 1):
             ndata_mat = np.concatenate((ndata_mat.data, ndmo.data), axis=1)
             ndata_mat = np.ma.MaskedArray(ndata_mat.data, np.isnan(ndata_mat.data))
 
-dts_difference = dts_mat
 ndata_difference = ndata_lat - ndata_mat
 
 # # Filter
@@ -193,10 +179,10 @@ difference_norm = colors.BoundaryNorm(difference_levels, cmap.N)
 fig = Figure(
     figsize=(16 * 3, 4.5 * 3),  # Width, Height (inches)
     dpi=300,
-    facecolor=(0.5, 0.5, 0.5, 1),
+    facecolor=(1.0, 1.0, 1.0, 1),
     edgecolor=None,
     linewidth=0.0,
-    frameon=False,
+    frameon=True,
     subplotpars=None,
     tight_layout=None,
 )
@@ -205,187 +191,42 @@ matplotlib.rc("font", **font)
 canvas = FigureCanvas(fig)
 matplotlib.rc("image", aspect="auto")
 
-# White background for whole figure
-axb = fig.add_axes(
-    [0.0, 0.0, 1.0, 1.0],
-    facecolor="white",
-    xmargin=0,
-    ymargin=0,
-)
-axb.set_axis_off()
-axb.fill([0, 1, 1, 0], [0, 0, 1, 1], "white")
 
-
-# Plot the difference stripes
-ax = fig.add_axes(
-    [0.0, 0.02, 0.9, 0.95 / 3],
-    facecolor="black",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(1, 0),
-)
-ax.set_axis_off()
-# Add a textured grey background
-img2 = texture_background(ax)
-
-s = ndata_difference.shape
-y = 1.0 - np.linspace(0, 1, s[0] + 1)
-x = [(a - datetime.timedelta(days=15)).timestamp() for a in dts_difference]
-x.append((dts_difference[-1] + datetime.timedelta(days=15)).timestamp())
-img = ax.pcolorfast(
-    x, y, ndata_difference, cmap=cmap, alpha=1.0, norm=difference_norm, zorder=100
-)
-ax_cb = fig.add_axes(get_colorbar_location(ax))
-
-ax_cb.set_axis_off()
-cb = fig.colorbar(
-    img,
-    ax=ax_cb,
-    location="right",
-    orientation="vertical",
-    fraction=1.0,
-    label="Anomaly (C)",
-    ticks=[-2, -1, -0.5, 0, 0.5, 1, 2],
+ax_diff = fig.add_axes([0, 0, 1, 1 / 3])
+plot_dataset(
+    ax_diff,
+    dts,
+    ndata_difference,
+    cmap=cmap,
+    norm=difference_norm,
+    colorbar=True,
+    ticks=True,
+    ticks_fontsize=18,
+    cm_fontsize=18,
 )
 
-
-# Add a latitude grid
-axg = fig.add_axes(
-    [0.0, 0.02, 0.9, 0.98],
-    facecolor="green",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(0, 1),
-)
-axg.set_axis_off()
-
-
-for lat in (-60, -30, 0, 30, 60):
-    add_latline(ax, lat, start, end)
-
-# Plot the MAT data
-
-ax_mat = fig.add_axes(
-    [0.0, 0.02 + 1 / 3, 0.9, 0.95 / 3],
-    facecolor="black",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(1, 0),
-)
-ax_mat.set_axis_off()
-
-# Textured grey background
-img3 = texture_background(ax_mat)
-
-
-s = ndata_difference.shape
-y = 1.0 - np.linspace(0, 1, s[0] + 1)
-x = [(a - datetime.timedelta(days=15)).timestamp() for a in dts_difference]
-x.append((dts_difference[-1] + datetime.timedelta(days=15)).timestamp())
-img_m = ax_mat.pcolorfast(
-    x, y, ndata_mat, cmap=cmap, alpha=1.0, norm=mat_norm, zorder=100
-)
-ax_cbm = fig.add_axes(get_colorbar_location(ax_mat))
-ax_cbm.set_axis_off()
-cbm = fig.colorbar(
-    img_m,
-    ax=ax_cbm,
-    location="right",
-    orientation="vertical",
-    fraction=1.0,
-    label="Anomaly (C)",
-    ticks=[-2, -1, -0.5, 0, 0.5, 1, 2],
+ax_mat = fig.add_axes([0, (0.05 + 1) / 3, 1, 0.95 / 3])
+plot_dataset(
+    ax_mat,
+    dts,
+    ndata_mat,
+    cmap=cmap,
+    norm=mat_norm,
+    colorbar=True,
+    ticks=False,
+    cm_fontsize=18,
 )
 
-for lat in (-60, -30, 0, 30, 60):
-    add_latline(ax_mat, lat, start, end)
-
-# Plot the LAT data
-
-ax_lat = fig.add_axes(
-    [0.0, 0.02 + 2 / 3, 0.9, 0.95 / 3],
-    facecolor="black",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(1, 0),
-)
-ax_lat.set_axis_off()
-
-# Textured grey background
-img4 = texture_background(ax_lat)
-
-
-s = ndata_difference.shape
-y = 1.0 - np.linspace(0, 1, s[0] + 1)
-x = [(a - datetime.timedelta(days=15)).timestamp() for a in dts_difference]
-x.append((dts_difference[-1] + datetime.timedelta(days=15)).timestamp())
-img_l = ax_lat.pcolorfast(
-    x, y, ndata_lat, cmap=cmap, alpha=1.0, norm=lat_norm, zorder=100
-)
-ax_cbl = fig.add_axes(get_colorbar_location(ax_lat))
-ax_cbl.set_axis_off()
-cbl = fig.colorbar(
-    img_l,
-    ax=ax_cbl,
-    location="right",
-    orientation="vertical",
-    fraction=1.0,
-    label="Anomaly (C)",
-    ticks=[-2, -1, -0.5, 0, 0.5, 1, 2],
+ax_lat = fig.add_axes([0, (0.05 + 2) / 3, 1, 0.95 / 3])
+plot_dataset(
+    ax_lat,
+    dts,
+    ndata_lat,
+    cmap=cmap,
+    norm=lat_norm,
+    colorbar=True,
+    ticks=False,
+    cm_fontsize=18,
 )
 
-for lat in (-60, -30, 0, 30, 60):
-    add_latline(ax_lat, lat, start, end)
-
-
-# Add a date grid to the whole figure
-axg = fig.add_axes(
-    [0.0, 0, 0.9, 1],
-    facecolor="green",
-    xlim=(
-        (start + datetime.timedelta(days=1)).timestamp(),
-        (end - datetime.timedelta(days=1)).timestamp(),
-    ),
-    ylim=(0, 1),
-)
-axg.set_axis_off()
-
-
-def add_dateline(ax, year):
-    x = datetime.datetime(year, 1, 1, 0, 0).timestamp()
-    ax.add_line(
-        Line2D(
-            [x, x], [0.04, 1.0], linewidth=0.75, color=(0.2, 0.2, 0.2, 1), zorder=200
-        )
-    )
-    if (
-        year >= args.startyear + 5 and year <= args.endyear - 5
-    ):  # No space for label at the edges
-        # Add the year label
-        ax.text(
-            x,
-            0.01,
-            "%04d" % year,
-            horizontalalignment="center",
-            verticalalignment="center",
-            color="black",
-            clip_on=True,
-            zorder=200,
-        )
-
-
-for year in range((args.startyear // 10) * 10, args.endyear, 10):
-    if year == args.startyear or year == args.endyear:
-        continue
-    add_dateline(axg, year)
-
-
-fig.savefig("%s/%s_%s_%s.png" % (".", "SAT+MAT+Diff", args.reduce, args.convolve))
+fig.savefig("%s/%s_%s_%s.png" % (".", "LAT+MAT+Diff", args.reduce, args.convolve))
