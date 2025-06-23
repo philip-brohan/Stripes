@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# GloSAT stripes - anomalies.
+# HadCRUT stripes - anomalies.
 # Monthly, resolved in latitude,
 # Comparison plot: MAT, LAT, and blended
 
@@ -11,11 +11,11 @@ from utilities.utils import longitude_reduce, csmooth
 from utilities.grids import VRCube
 from utilities.plot import plot_dataset
 
-from GloSAT.load import load_month as load_blended
-from GloSAT.GloSATMAT.load import load_month as load_mat
-from GloSAT.GloSATLAT.load import load_month as load_lat
-from GloSAT.GloSATLAT.load import get_land_mask as get_lat_land_mask
-from GloSAT.GloSATMAT.load import get_land_mask as get_mat_land_mask
+from HadCRUT.load import load_month as load_blended
+from HadSST.load import load_month as load_mat
+from CRUTEM.load import load_month as load_lat
+from CRUTEM.load import get_land_mask as get_lat_land_mask
+from HadSST.load import get_land_mask as get_mat_land_mask
 
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas

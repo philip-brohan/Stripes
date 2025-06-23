@@ -177,7 +177,7 @@ difference_norm = colors.BoundaryNorm(difference_levels, cmap.N)
 
 # Plot the resulting arrays as 2d colourmaps
 fig = Figure(
-    figsize=(16 * 3, 4.5 * 3),  # Width, Height (inches)
+    figsize=(16 * 3, 4.5 * 6),  # Width, Height (inches)
     dpi=300,
     facecolor=(1.0, 1.0, 1.0, 1),
     edgecolor=None,

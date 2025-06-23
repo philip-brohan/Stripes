@@ -1,4 +1,4 @@
-# Functions to load the GLOSAT data
+# Functions to load the HadCRUT data
 
 # Loading the data month-by-month is too slow, so we load a decade at a time and cache it
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# CRUTEM stripes - anomalies.
+# GloSATMAT stripes - anomalies.
 # Monthly, resolved in latitude,
 
 import datetime

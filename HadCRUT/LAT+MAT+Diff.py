@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-# GloSAT stripes - anomalies.
+# HadCRUT component stripes - anomalies.
 # Monthly, resolved in latitude,
-# Comparison plot: MAT, LAT, and blended
+# Comparison plot: MAT, LAT, and difference
 
 import datetime
 import numpy as np
@@ -11,11 +11,10 @@ from utilities.utils import longitude_reduce, csmooth
 from utilities.grids import VRCube
 from utilities.plot import plot_dataset
 
-from GloSAT.load import load_month as load_blended
-from GloSAT.GloSATMAT.load import load_month as load_mat
-from GloSAT.GloSATLAT.load import load_month as load_lat
-from GloSAT.GloSATLAT.load import get_land_mask as get_lat_land_mask
-from GloSAT.GloSATMAT.load import get_land_mask as get_mat_land_mask
+from HadSST.load import load_month as load_mat
+from CRUTEM.load import load_month as load_lat
+from CRUTEM.load import get_land_mask as get_lat_land_mask
+from HadSST.load import get_land_mask as get_mat_land_mask
 
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -113,7 +112,7 @@ mat_land_mask = get_mat_land_mask(new_grid=new_grid)
 dts = []
 ndata_lat = None
 ndata_mat = None
-ndata_blended = None
+ndata_diff = None
 
 for year in range(start.year, end.year + 1):
     print(year)
@@ -145,26 +144,14 @@ for year in range(start.year, end.year + 1):
         else:
             ndata_mat = np.concatenate((ndata_mat.data, ndmo.data), axis=1)
             ndata_mat = np.ma.MaskedArray(ndata_mat.data, np.isnan(ndata_mat.data))
-        # Blended
-        mdata = load_blended(year, month, new_grid=new_grid)
-        if mdata is None:
-            ndmo = np.ma.MaskedArray(np.full((mat_land_mask.shape[0], 1), np.nan), True)
-        else:
-            mdata.data.data[mdata.data.mask] = np.nan  # Mask the data
-            ndmo = longitude_reduce(args.reduce, mdata.data)
-        if ndata_blended is None:
-            ndata_blended = ndmo
-        else:
-            ndata_blended = np.concatenate((ndata_blended.data, ndmo.data), axis=1)
-            ndata_blended = np.ma.MaskedArray(
-                ndata_blended.data, np.isnan(ndata_blended.data)
-            )
+
+ndata_diff = ndata_lat - ndata_mat
 
 # # Filter
 if args.convolve != "none":
     ndata_lat = csmooth(args.convolve, ndata_lat)
     ndata_mat = csmooth(args.convolve, ndata_mat)
-    ndata_blended = csmooth(args.convolve, ndata_blended)
+    ndata_diff = csmooth(args.convolve, ndata_diff)
 
 # Set the colours
 cmap = matplotlib.colormaps.get_cmap("RdYlBu_r")
@@ -175,18 +162,18 @@ lat_levels = np.quantile(
     method="linear",
 )
 lat_norm = colors.BoundaryNorm(lat_levels, cmap.N)
-mat_levels = np.quantile(
-    ndata_mat.compressed(),
-    np.linspace(0, 1, cmap.N + 1),
-    method="linear",
-)
-mat_norm = colors.BoundaryNorm(mat_levels, cmap.N)
-blended_levels = np.quantile(
-    ndata_blended.compressed(),
-    np.linspace(0, 1, cmap.N + 1),
-    method="linear",
-)
-blended_norm = colors.BoundaryNorm(blended_levels, cmap.N)
+# mat_levels = np.quantile(
+#     ndata_mat.compressed(),
+#     np.linspace(0, 1, cmap.N + 1),
+#     method="linear",
+# )
+# mat_norm = colors.BoundaryNorm(mat_levels, cmap.N)
+# blended_levels = np.quantile(
+#     ndata_diff.compressed(),
+#     np.linspace(0, 1, cmap.N + 1),
+#     method="linear",
+# )
+# blended_norm = colors.BoundaryNorm(blended_levels, cmap.N)
 
 # Plot the resulting arrays as 2d colourmaps
 fig = Figure(
@@ -205,14 +192,14 @@ canvas = FigureCanvas(fig)
 matplotlib.rc("image", aspect="auto")
 
 
-ax_blended = fig.add_axes([0, 0, 1, 1 / 3])
+ax_diff = fig.add_axes([0, 0, 1, 1 / 3])
 plot_dataset(
-    ax_blended,
+    ax_diff,
     dts,
-    ndata_blended,
+    ndata_diff,
     cmap=cmap,
-    norm=blended_norm,
-    colorbar=True,
+    norm=lat_norm,
+    colorbar=False,
     ticks=True,
     ticks_fontsize=18,
     cm_fontsize=18,
@@ -224,7 +211,7 @@ plot_dataset(
     dts,
     ndata_mat,
     cmap=cmap,
-    norm=mat_norm,
+    norm=lat_norm,
     colorbar=True,
     ticks=False,
     cm_fontsize=18,
@@ -237,9 +224,9 @@ plot_dataset(
     ndata_lat,
     cmap=cmap,
     norm=lat_norm,
-    colorbar=True,
+    colorbar=False,
     ticks=False,
     cm_fontsize=18,
 )
 
-fig.savefig("%s/%s_%s_%s.png" % (".", "LAT+MAT+Blended", args.reduce, args.convolve))
+fig.savefig("%s/%s_%s_%s.png" % (".", "LAT+MAT+Diff", args.reduce, args.convolve))

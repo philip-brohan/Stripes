@@ -9,6 +9,8 @@ dependencies:
   - gcsfs
   - cmocean
   - astropy
+  - black
+  - sphinx
 
 variables:
   PYTHONPATH: /home/users/philip.brohan/Projects/Stripes
