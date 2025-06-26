@@ -39,3 +39,7 @@ tmp
 
 # VSCode settings
 .vscode/
+
+# Data files
+*.nc
+*.pp
