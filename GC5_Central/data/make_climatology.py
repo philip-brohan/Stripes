@@ -18,10 +18,11 @@ def load_year(year, new_grid=None, experiment=None):
 
 
 count = 0
-for experiment in ["dl339"]:  # experiments:
+climatology = None
+for experiment in experiments:
     for year in range(1961, 1991):
         m = load_year(year, experiment=experiment)
-        if year == 1961:
+        if climatology is None:
             climatology = m.copy()
         else:
             climatology.data += m.data

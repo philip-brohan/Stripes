@@ -50,8 +50,8 @@ MAconstraint = iris.Constraint(
 
 
 # Load the data for a year
-def load_year(year, new_grid=None, experiments=experiments):
-    h = []
+def load_year(year, new_grid=None):
+    h = {}
     for experiment in experiments:
         m = iris.load_cube(
             "/data/scratch/philip.brohan/GC5-Central/Historical/"
@@ -65,12 +65,17 @@ def load_year(year, new_grid=None, experiments=experiments):
         m.data.data[m.data.mask] = np.nan  # Mask the data
         if new_grid is not None:
             m = m.regrid(new_grid, iris.analysis.Nearest())
-        h.append(m)
-    # Pick a random member at each gridpoint
-    expriment = rng.integers(0, len(experiments), size=h[0].data.shape)
-    for i in range(len(experiments)):
-        h[0].data[experiment == i] = h[i].data[experiment == i]
-    return h[0]
+        h[experiment] = m
+    return h
+
+
+# Pick a sample from a subset of the experiments at each gridpoint
+def sample_experiments(h, subset=experiments):
+    result = h[experiments[0]].copy()
+    experiment = np.random.choice(subset, size=result.data.shape)
+    for expt in experiments:
+        result.data[experiment == expt] = h[expt].data[experiment == expt]
+    return result
 
 
 # Load the data for a month
@@ -84,8 +89,10 @@ def load_month(year, month, new_grid=None, experiments=experiments):
         if current_year is None or year != current_year or cached_grid != new_grid:
             cached_grid = new_grid
             current_year = year
-            annual = load_year(current_year, new_grid=new_grid, experiments=experiments)
-        m = annual.extract(
+            annual = load_year(current_year, new_grid=new_grid)
+        # Sample randomly from the chosen experiments
+        e = sample_experiments(annual, subset=experiments)
+        m = e.extract(
             iris.Constraint(
                 time=lambda cell: cell.point.year == year and cell.point.month == month
             ),
