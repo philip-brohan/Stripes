@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Functions to load GloSATMAT &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinxdoc.css?v=34905f61" />
+    <script src="../../../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Functions to load GloSATMAT</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="functions-to-load-glosatmat">
+<h1>Functions to load GloSATMAT<a class="headerlink" href="#functions-to-load-glosatmat" title="Link to this heading">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Functions to load the GloSATMAT data</span>
+
+<span class="c1"># Loading the data month-by-month is too slow, so we load a decade at a time and cache it</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">iris</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">iris.coord_systems</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">iris.fileformats</span>
+
+<span class="n">coord_s</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">coord_systems</span><span class="o">.</span><span class="n">GeogCS</span><span class="p">(</span><span class="n">iris</span><span class="o">.</span><span class="n">fileformats</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">EARTH_RADIUS</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">utilities.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">rng</span>
+
+<span class="c1"># I don&#39;t want warnings about sub-second time precision</span>
+<span class="n">iris</span><span class="o">.</span><span class="n">FUTURE</span><span class="o">.</span><span class="n">date_microseconds</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># Choose ten ensemble members - same as HadCRUT</span>
+<span class="n">members</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+
+
+<span class="n">current_decade</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">decadal</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">cached_grid</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="c1"># Need a land mask - masks out ocean-only grid cells - keep cells with a small island.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_land_mask</span><span class="p">(</span><span class="n">new_grid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">lm</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">load_cube</span><span class="p">(</span>
+        <span class="s2">&quot;/data/users/hadobs/cma_datasets/hadcrut5/hadobs-release/HadCRUT.5.0.2.0-202502/analysis/HadCRUT.5.0.2.0.land_fraction.nc&quot;</span>
+    <span class="p">)</span>
+    <span class="n">lm</span><span class="o">.</span><span class="n">coord</span><span class="p">(</span><span class="s2">&quot;latitude&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">coord_system</span> <span class="o">=</span> <span class="n">coord_s</span>
+    <span class="n">lm</span><span class="o">.</span><span class="n">coord</span><span class="p">(</span><span class="s2">&quot;longitude&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">coord_system</span> <span class="o">=</span> <span class="n">coord_s</span>
+    <span class="k">if</span> <span class="n">new_grid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lm</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">regrid</span><span class="p">(</span><span class="n">new_grid</span><span class="p">,</span> <span class="n">iris</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Nearest</span><span class="p">())</span>
+    <span class="n">lm</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">MaskedArray</span><span class="p">(</span>
+        <span class="n">lm</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">lm</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="mf">1.0</span>
+    <span class="p">)</span>  <span class="c1"># Mask out land fraction of 1</span>
+    <span class="k">return</span> <span class="n">lm</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_decade</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">new_grid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">members</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">load_cube</span><span class="p">(</span>
+            <span class="s2">&quot;/data/scratch/philip.brohan/GLOSAT/1.0/&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;GloSATMAT_2.4.0.0_ensemble_member_anomaly_</span><span class="si">%04d</span><span class="s2">_b1961_1990.nc&quot;</span> <span class="o">%</span> <span class="n">member</span><span class="p">,</span>
+            <span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span>
+                <span class="n">time</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cell</span><span class="p">:</span> <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">year</span> <span class="o">&gt;=</span> <span class="n">year</span>
+                <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">year</span> <span class="o">&lt;</span> <span class="n">year</span> <span class="o">+</span> <span class="mi">10</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">coord</span><span class="p">(</span><span class="s2">&quot;latitude&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">coord_system</span> <span class="o">=</span> <span class="n">coord_s</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">coord</span><span class="p">(</span><span class="s2">&quot;longitude&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">coord_system</span> <span class="o">=</span> <span class="n">coord_s</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># Mask the data</span>
+        <span class="k">if</span> <span class="n">new_grid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">regrid</span><span class="p">(</span><span class="n">new_grid</span><span class="p">,</span> <span class="n">iris</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Nearest</span><span class="p">())</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="c1"># Pick a random member at each gridpoint</span>
+    <span class="n">member</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)):</span>
+        <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">member</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">member</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="c1"># Load the data for a month</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_month</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">new_grid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="k">global</span> <span class="n">current_decade</span>
+    <span class="k">global</span> <span class="n">decadal</span>
+    <span class="k">global</span> <span class="n">cached_grid</span>
+    <span class="c1"># If the decade has changed, or the grid has changed, reload the decade</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">current_decade</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">year</span> <span class="o">&lt;</span> <span class="n">current_decade</span>
+            <span class="ow">or</span> <span class="n">year</span> <span class="o">&gt;=</span> <span class="n">current_decade</span> <span class="o">+</span> <span class="mi">10</span>
+            <span class="ow">or</span> <span class="n">cached_grid</span> <span class="o">!=</span> <span class="n">new_grid</span>
+        <span class="p">):</span>
+            <span class="n">cached_grid</span> <span class="o">=</span> <span class="n">new_grid</span>
+            <span class="n">current_decade</span> <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="p">(</span><span class="n">year</span> <span class="o">%</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="n">decadal</span> <span class="o">=</span> <span class="n">load_decade</span><span class="p">(</span><span class="n">current_decade</span><span class="p">,</span> <span class="n">new_grid</span><span class="o">=</span><span class="n">new_grid</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">decadal</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span>
+            <span class="n">iris</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span>
+                <span class="n">time</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cell</span><span class="p">:</span> <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">year</span> <span class="o">==</span> <span class="n">year</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="n">month</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">iris</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ConstraintMismatchError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">new_grid</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">new_grid</span>
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo of Extended climate stripes"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Functions to load GloSATMAT</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

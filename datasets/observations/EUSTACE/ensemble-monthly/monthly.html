@@ -1,22 +1,20 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Make monthly averages from daily EUSTACE data &#8212; Extended climate stripes</title>
-    <link rel="stylesheet" href="../../../../_static/sphinxdoc.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
-    <script src="../../../../_static/jquery.js"></script>
-    <script src="../../../../_static/underscore.js"></script>
-    <script src="../../../../_static/doctools.js"></script>
-    <script src="../../../../_static/language_data.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinxdoc.css?v=34905f61" />
+    <script src="../../../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" /> 
   </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
+    <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -32,23 +30,23 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="make-monthly-averages-from-daily-eustace-data">
-<h1>Make monthly averages from daily EUSTACE data<a class="headerlink" href="#make-monthly-averages-from-daily-eustace-data" title="Permalink to this headline">¶</a></h1>
+  <section id="make-monthly-averages-from-daily-eustace-data">
+<h1>Make monthly averages from daily EUSTACE data<a class="headerlink" href="#make-monthly-averages-from-daily-eustace-data" title="Link to this heading">¶</a></h1>
 <p>The only complication in this process is in handling missing data. I chose (arbitrarily) that a monthly average would be the mean of all the available daily averages in that month if at least 20 daily values were available (and missing otherwise).</p>
 <p>166 years of daily data is a lot of averaging, so parallelise it by writing a script to do one month</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 
 <span class="c1"># Make monthly means from daily EUSTACE1.0 data.</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">iris</span>
-<span class="kn">from</span> <span class="nn">calendar</span> <span class="kn">import</span> <span class="n">monthrange</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">iris</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">calendar</span><span class="w"> </span><span class="kn">import</span> <span class="n">monthrange</span>
 
 <span class="c1"># Fix dask SPICE bug</span>
-<span class="kn">import</span> <span class="nn">dask</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dask</span>
 <span class="n">dask</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">scheduler</span><span class="o">=</span><span class="s1">&#39;single-threaded&#39;</span><span class="p">)</span>
 
-<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
 <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--month&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Integer month&quot;</span><span class="p">,</span>
                     <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -64,7 +62,7 @@
 
 <span class="n">op_file</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%02d</span><span class="s2">.nc&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">op_dir</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">month</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">average_over_month</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">average_over_month</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
     <span class="n">accum</span> <span class="o">=</span> <span class="kc">None</span>  
     <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">monthrange</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">year</span><span class="p">,</span><span class="n">args</span><span class="o">.</span><span class="n">month</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
       <span class="n">inst</span> <span class="o">=</span> <span class="n">iris</span><span class="o">.</span><span class="n">load_cube</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%04d</span><span class="s2">/tas_global_eustace_0_</span><span class="si">%04d%02d%02d</span><span class="s2">.nc&quot;</span> <span class="o">%</span>
@@ -101,8 +99,8 @@
 
 <span class="c1"># Scripts to make means for every month</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
 
 <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="mi">1850</span><span class="p">,</span><span class="mi">2016</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">month</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">13</span><span class="p">):</span>
@@ -114,17 +112,17 @@
 </pre></div>
 </div>
 <p>and then running those tasks in parallel.</p>
-</div>
+</section>
 
 
             <div class="clearer"></div>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
             <p class="logo"><a href="../../../../index.html">
-              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo"/>
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo of Extended climate stripes"/>
             </a></p>
 <h3><a href="../../../../index.html">Table of Contents</a></h3>
 <h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
@@ -139,7 +137,7 @@ Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an is
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related" role="navigation" aria-label="related navigation">
+    <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">

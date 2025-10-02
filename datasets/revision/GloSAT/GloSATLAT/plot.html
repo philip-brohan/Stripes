@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>GloSATLAT plotting code (2025 revision) &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinxdoc.css?v=34905f61" />
+    <script src="../../../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GloSATLAT plotting code (2025 revision)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="glosatlat-plotting-code-2025-revision">
+<h1>GloSATLAT plotting code (2025 revision)<a class="headerlink" href="#glosatlat-plotting-code-2025-revision" title="Link to this heading">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="c1"># GloSAT LAT stripes - anomalies.</span>
+<span class="c1"># Monthly, resolved in latitude,</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">utilities.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">longitude_reduce</span><span class="p">,</span> <span class="n">csmooth</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utilities.grids</span><span class="w"> </span><span class="kn">import</span> <span class="n">VRCube</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utilities.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_dataset</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">GloSAT.GloSATLAT.load</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_month</span><span class="p">,</span> <span class="n">get_land_mask</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.backends.backend_agg</span><span class="w"> </span><span class="kn">import</span> <span class="n">FigureCanvasAgg</span> <span class="k">as</span> <span class="n">FigureCanvas</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">colors</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LinkedArgumentsAction</span><span class="p">(</span><span class="n">argparse</span><span class="o">.</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">option_string</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+        <span class="c1"># Check if the linked argument exists when this one is set</span>
+        <span class="k">if</span> <span class="n">option_string</span> <span class="o">==</span> <span class="s2">&quot;--lat_resolution&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
+            <span class="n">namespace</span><span class="p">,</span> <span class="s2">&quot;lon_resolution&quot;</span>
+        <span class="p">):</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;--lon_resolution must be specified when --lat_resolution is used&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">option_string</span> <span class="o">==</span> <span class="s2">&quot;--lon_resolution&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
+            <span class="n">namespace</span><span class="p">,</span> <span class="s2">&quot;lat_resolution&quot;</span>
+        <span class="p">):</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;--lat_resolution must be specified when --lon_resolution is used&quot;</span>
+            <span class="p">)</span>
+
+
+<span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--reduce&quot;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Longitude reduction method&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--convolve&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Convolution filter&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;none&quot;</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--vmin&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=-</span><span class="mf">3.0</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--vmax&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--startyear&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="mi">1950</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--endyear&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--lat_resolution&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">action</span><span class="o">=</span><span class="n">LinkedArgumentsAction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--lon_resolution&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">action</span><span class="o">=</span><span class="n">LinkedArgumentsAction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">endyear</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">endyear</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span>
+
+<span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">startyear</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">endyear</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">23</span><span class="p">)</span>
+
+<span class="n">new_grid</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">lat_resolution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">new_grid</span> <span class="o">=</span> <span class="n">VRCube</span><span class="p">(</span>
+        <span class="n">lat_resolution</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lat_resolution</span><span class="p">,</span> <span class="n">lon_resolution</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lon_resolution</span>
+    <span class="p">)</span>
+
+<span class="n">land_mask</span> <span class="o">=</span> <span class="n">get_land_mask</span><span class="p">(</span><span class="n">new_grid</span><span class="o">=</span><span class="n">new_grid</span><span class="p">)</span>
+
+<span class="c1"># Load the data for each month and reduce member and meridional variation</span>
+<span class="n">dts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ndata</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">end</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">month</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">13</span><span class="p">):</span>
+        <span class="n">dts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">mdata</span> <span class="o">=</span> <span class="n">load_month</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">new_grid</span><span class="o">=</span><span class="n">new_grid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mdata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ndmo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">MaskedArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">land_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mdata</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">mdata</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># Mask the data</span>
+            <span class="n">ndmo</span> <span class="o">=</span> <span class="n">longitude_reduce</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">reduce</span><span class="p">,</span> <span class="n">mdata</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">land_mask</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ndata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ndata</span> <span class="o">=</span> <span class="n">ndmo</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ndata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">ndata</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ndmo</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ndata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">MaskedArray</span><span class="p">(</span><span class="n">ndata</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ndata</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+
+<span class="c1"># # Filter</span>
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">convolve</span> <span class="o">!=</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+    <span class="n">ndata</span> <span class="o">=</span> <span class="n">csmooth</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">convolve</span><span class="p">,</span> <span class="n">ndata</span><span class="p">)</span>
+
+<span class="c1"># Set the colours</span>
+<span class="n">cmap</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">colormaps</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s2">&quot;RdYlBu_r&quot;</span><span class="p">)</span>
+<span class="c1"># Set levels so there&#39;s an equal amount of each colour</span>
+<span class="n">levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span>
+    <span class="n">ndata</span><span class="o">.</span><span class="n">compressed</span><span class="p">(),</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cmap</span><span class="o">.</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">norm</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">BoundaryNorm</span><span class="p">(</span><span class="n">levels</span><span class="p">,</span> <span class="n">cmap</span><span class="o">.</span><span class="n">N</span><span class="p">)</span>
+
+<span class="c1"># Plot the resulting array as a 2d colourmap</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">Figure</span><span class="p">(</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">),</span>  <span class="c1"># Width, Height (inches)</span>
+    <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+    <span class="n">facecolor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">edgecolor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">frameon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">subplotpars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">tight_layout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">font</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">}</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;font&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
+<span class="n">canvas</span> <span class="o">=</span> <span class="n">FigureCanvas</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+<span class="n">plot_dataset</span><span class="p">(</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+    <span class="n">dts</span><span class="p">,</span>
+    <span class="n">ndata</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span>
+    <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+    <span class="n">colorbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">ticks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">ticks_fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+    <span class="n">cm_fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.png&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;GloSATLAT&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">reduce</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">convolve</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../../index.html">
+              <img class="logo" src="../../../../_static/Stripes.png" alt="Logo of Extended climate stripes"/>
+            </a></p>
+<h3><a href="../../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">GloSATLAT plotting code (2025 revision)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

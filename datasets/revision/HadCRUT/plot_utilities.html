@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Utility functions for stripes plotting &#8212; Extended climate stripes</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css?v=34905f61" />
+    <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Utility functions for stripes plotting</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="utility-functions-for-stripes-plotting">
+<h1>Utility functions for stripes plotting<a class="headerlink" href="#utility-functions-for-stripes-plotting" title="Link to this heading">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Shared plotting functions</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.lines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Line2D</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">colors</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits.axes_grid1.inset_locator</span><span class="w"> </span><span class="kn">import</span> <span class="n">inset_axes</span>
+
+
+<span class="c1"># Add a line of latitude to an axes</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_latline</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">latitude</span><span class="p">):</span>
+    <span class="n">latl</span> <span class="o">=</span> <span class="p">(</span><span class="n">latitude</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">/</span> <span class="mi">180</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span>
+        <span class="n">Line2D</span><span class="p">(</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">(),</span>
+            <span class="p">[</span><span class="n">latl</span><span class="p">,</span> <span class="n">latl</span><span class="p">],</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">zorder</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># Add a vertical date line</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_dateline</span><span class="p">(</span><span class="n">ax_main</span><span class="p">,</span> <span class="n">ax_ticks</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+    <span class="n">ax_main</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span>
+        <span class="n">Line2D</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">ax_ticks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Add the year label</span>
+        <span class="n">tfp</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">ax_ticks</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="n">ax_ticks</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ax_ticks</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">tfp</span> <span class="o">&lt;</span> <span class="mf">0.02</span> <span class="ow">or</span> <span class="n">tfp</span> <span class="o">&gt;</span> <span class="mf">0.98</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">ax_ticks</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span>
+            <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="si">%04d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">year</span><span class="p">,</span>
+            <span class="n">horizontalalignment</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+            <span class="n">verticalalignment</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+            <span class="n">clip_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">,</span>
+            <span class="n">zorder</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="c1"># Add a colorbar</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_colorbar</span><span class="p">(</span>
+    <span class="n">ax_cb</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Anomaly(C)&quot;</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span>
+<span class="p">):</span>
+    <span class="n">ax_cb</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="n">cbm</span> <span class="o">=</span> <span class="n">ax_cb</span><span class="o">.</span><span class="n">get_figure</span><span class="p">()</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
+        <span class="n">img</span><span class="p">,</span>
+        <span class="n">ax</span><span class="o">=</span><span class="n">ax_cb</span><span class="p">,</span>
+        <span class="n">location</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span>
+        <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">,</span>
+        <span class="n">fraction</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+        <span class="n">ticks</span><span class="o">=</span><span class="n">ticks</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cbm</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="n">fontsize</span><span class="p">)</span>  <span class="c1"># Set label font size</span>
+    <span class="n">cbm</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">)</span>  <span class="c1"># Set tick label font size</span>
+
+
+<span class="c1"># Add a textured grey background to an axes</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">texture_background</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">600</span><span class="p">)):</span>
+    <span class="n">nd2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">clrs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">shade</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.42</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.36</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">):</span>
+        <span class="n">clrs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">shade</span><span class="p">,</span> <span class="n">shade</span><span class="p">,</span> <span class="n">shade</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">yg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">xg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span>
+        <span class="n">xg</span><span class="p">,</span>
+        <span class="n">yg</span><span class="p">,</span>
+        <span class="n">nd2</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">ListedColormap</span><span class="p">(</span><span class="n">clrs</span><span class="p">),</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;gouraud&quot;</span><span class="p">,</span>
+        <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">img</span>
+
+
+<span class="c1"># Plot a set of three datasets</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_dataset</span><span class="p">(</span>
+    <span class="n">ax</span><span class="p">,</span>
+    <span class="n">dts</span><span class="p">,</span>
+    <span class="n">ndata</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="p">,</span>
+    <span class="n">norm</span><span class="p">,</span>
+    <span class="n">colorbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">ticks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">ticks_fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+    <span class="n">cm_fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+
+    <span class="c1"># Sub axes - main, colorbar, maybe xticks</span>
+    <span class="k">if</span> <span class="n">ticks</span><span class="p">:</span>
+        <span class="n">ax_main</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">(</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">ax_cb</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.955</span><span class="p">,</span> <span class="mf">0.05</span> <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.7</span> <span class="o">*</span> <span class="mf">0.95</span><span class="p">])</span>
+        <span class="n">ax_ticks</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">(</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax_main</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+        <span class="n">ax_cb</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.955</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.045</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">])</span>
+        <span class="n">ax_ticks</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">ax_main</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="n">ax_main</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">dts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+        <span class="p">(</span><span class="n">dts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">ax_main</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">ax_cb</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">ax_ticks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax_ticks</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+        <span class="n">ax_ticks</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">dts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+            <span class="p">(</span><span class="n">dts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">ax_ticks</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Add a textured grey background</span>
+    <span class="n">imgt</span> <span class="o">=</span> <span class="n">texture_background</span><span class="p">(</span><span class="n">ax_main</span><span class="p">)</span>
+
+    <span class="c1"># Main plot</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">ndata</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[(</span><span class="n">a</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">15</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">]</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">15</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+    <span class="n">imgm</span> <span class="o">=</span> <span class="n">ax_main</span><span class="o">.</span><span class="n">pcolorfast</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ndata</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+    <span class="c1"># Add a latitude grid</span>
+    <span class="k">for</span> <span class="n">lat</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">60</span><span class="p">):</span>
+        <span class="n">add_latline</span><span class="p">(</span><span class="n">ax_main</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+
+    <span class="c1"># Add a date grid</span>
+
+    <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">((</span><span class="n">dts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">year</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="n">add_dateline</span><span class="p">(</span><span class="n">ax_main</span><span class="p">,</span> <span class="n">ax_ticks</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">ticks_fontsize</span><span class="p">)</span>
+
+    <span class="c1"># add a ColourBar</span>
+    <span class="k">if</span> <span class="n">colorbar</span><span class="p">:</span>
+        <span class="n">add_colorbar</span><span class="p">(</span><span class="n">ax_cb</span><span class="p">,</span> <span class="n">imgm</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Anomaly (C)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">cm_fontsize</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/Stripes.png" alt="Logo of Extended climate stripes"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<h3><a href="https://github.com/philip-brohan/Stripes">Get the source code</a></h3>
+
+<a href="https://github.com/philip-brohan/Stripes"
+           rel="nofollow">Github source repository</a>
+
+<h3>Found a bug, or have a suggestion?</h3>
+
+Please <a href="https://github.com/philip-brohan/Stripes/issues/new">raise an issue</a>.
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Stripes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Utility functions for stripes plotting</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
