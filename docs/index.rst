@@ -40,7 +40,13 @@ One instantly apparent feature of this figure are the missing observations durin
 
 This figure shows not only the modern global warming, but variability associated with ENSO, and the marked difference in behaviour in the tropics, the southern ocean, and the high-latitude predominantly land regions. Most interestingly it shows a warming in the mid-20th century, quite different from modern global warming as it was largely restricted to the Northern high-latitudes.
 
-This works well as an extended stripes picture, but we should check its accuracy by :doc:`comparing with other datasets <comparison>`.
+This works well as an extended stripes picture, but we can further improve it:
+
+.. toctree:: 
+   :maxdepth: 1
+
+   Comparing with other datasets <comparison>
+   Revised plotting process and land-sea comparisons <comparisons2>
 
 --------------------------------------------
 
